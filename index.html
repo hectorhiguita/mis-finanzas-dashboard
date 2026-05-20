@@ -325,9 +325,22 @@ footer {
   text-align:center; padding:2rem; font-size:0.7rem; color:var(--muted);
   border-top:1px solid var(--border);
 }
+.footer-actions { display:flex; justify-content:center; align-items:center; gap:1rem; flex-wrap:wrap; margin-top:0.75rem; }
+.export-btn {
+  background:var(--card2); border:1px solid var(--border);
+  color:var(--text); padding:0.4rem 1rem; border-radius:8px;
+  font-size:0.75rem; cursor:pointer; transition:border-color .2s;
+}
+.export-btn:hover { border-color:var(--gold); }
+.import-btn {
+  background:var(--card2); border:1px solid var(--border);
+  color:var(--text); padding:0.4rem 1rem; border-radius:8px;
+  font-size:0.75rem; cursor:pointer; transition:border-color .2s;
+}
+.import-btn:hover { border-color:var(--blue); }
 .reset-btn {
   background:transparent; border:none; color:var(--muted);
-  font-size:0.65rem; cursor:pointer; text-decoration:underline; margin-top:0.5rem;
+  font-size:0.65rem; cursor:pointer; text-decoration:underline;
 }
 
 /* ── RESPONSIVE ── */
@@ -449,8 +462,15 @@ footer {
 </div>
 
 <footer>
-  Cacería de Deudas · Plan Financiero Personal 2026–2028<br>
-  <button class="reset-btn" onclick="resetConfirm()">⚠️ Reiniciar progreso</button>
+  Cacería de Deudas · Plan Financiero Personal 2026–2028
+  <div class="footer-actions">
+    <button class="export-btn" onclick="exportData()">⬇️ Exportar progreso</button>
+    <label class="import-btn" style="cursor:pointer">
+      ⬆️ Importar progreso
+      <input type="file" accept=".json" id="import-input" style="display:none" onchange="importData(event)">
+    </label>
+    <button class="reset-btn" onclick="resetConfirm()">⚠️ Reiniciar</button>
+  </div>
 </footer>
 
 <!-- CHECK-IN MODAL -->
@@ -1046,6 +1066,40 @@ function spawnParticles() {
       setTimeout(() => p.remove(), 1300);
     }, i * 25);
   }
+}
+
+// ═══════════════════════════════════════════════════
+//  EXPORT / IMPORT
+// ═══════════════════════════════════════════════════
+
+function exportData() {
+  const date = new Date().toISOString().slice(0, 10);
+  const blob = new Blob([JSON.stringify(S, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'caceria-deudas-' + date + '.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (!imported.debts || !imported.checkIns) throw new Error('Formato inválido');
+      S = imported;
+      save();
+      renderAll();
+      alert('✅ Progreso importado correctamente. Nivel ' + level(S.xp) + ' · ' + S.streak + ' mes(es) de racha.');
+    } catch(err) {
+      alert('❌ El archivo no es válido. Asegúrate de usar un archivo exportado desde este dashboard.');
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
 }
 
 // ═══════════════════════════════════════════════════
