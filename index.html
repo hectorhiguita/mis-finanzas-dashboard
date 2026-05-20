@@ -681,8 +681,8 @@ const DEBTS_DEF = [
   },
   {
     id:'bbva_tc', priority:2, icon:'👻', name:'BBVA TC', boss:'El Fantasma',
-    lore:'Identidad desconocida. Extracto pendiente. Se incluirá al plan en cuanto llegue el documento.',
-    initBal:null, payment:2187492, rate:null, target:'?', color:'#a78bfa', unknown:true
+    lore:'$25.9M · VISA Infinite con cupo excedido ($25M límite, $25.9M saldo). Tasa 26.73% EA. En cola tras BdO VISA; cae ~Jun 2027 con los pagos liberados.',
+    initBal:25923808, payment:2187493, rate:26.73, target:'Jun 2027', color:'#a78bfa'
   },
   {
     id:'bdo_tc', priority:3, icon:'✈️', name:'BdO VISA LATAM', boss:'El Viajero Deudor',
@@ -1292,9 +1292,10 @@ const BUDGET_CATS = [
     id:'seguros', label:'🛡️ Seguros',
     items:[
       { id:'hdi',       name:'HDI Moto CHJ10H',     note:'Póliza 94528041 · termina Sep 2026', proj:1300000 },
-      { id:'sbs',       name:'SBS Moto (cancelar)',  note:'Póliza 1054169 · pendiente cancelar', proj:576000 },
-      { id:'medicina',  name:'Medicina / EPS',       note:'', proj:0 },
-      { id:'otros_seg', name:'Otros seguros',        note:'', proj:0 }
+      { id:'sbs',       name:'SBS Moto (cancelar)', note:'Póliza 1054169 · pendiente cancelar', proj:576000 },
+      { id:'medicina',  name:'Medicina prepagada',  note:'COMPANIA DE MEDICINA PREP (extracto BBVA)', proj:47400 },
+      { id:'seg_bbva',  name:'Seguro BBVA Individ', note:'Cobro prima vía tarjeta BBVA', proj:4800 },
+      { id:'otros_seg', name:'Otros seguros',       note:'', proj:0 }
     ]
   },
   {
@@ -1308,11 +1309,13 @@ const BUDGET_CATS = [
   {
     id:'suscripciones', label:'📱 Suscripciones',
     items:[
-      { id:'spotify',    name:'Spotify',      note:'', proj:19900 },
-      { id:'amazon',     name:'Amazon Prime', note:'', proj:0 },
-      { id:'claude_pro', name:'Claude Pro',   note:'~USD 20', proj:85000 },
-      { id:'kiro',       name:'Kiro',         note:'', proj:0 },
-      { id:'otras_sus',  name:'Otras',        note:'', proj:0 }
+      { id:'spotify',    name:'Spotify',          note:'', proj:30500 },
+      { id:'netflix',    name:'Netflix',          note:'', proj:44900 },
+      { id:'apple',      name:'Apple.com/Bill',   note:'iCloud + suscripciones Apple', proj:29900 },
+      { id:'amazon',     name:'Amazon Prime',     note:'', proj:0 },
+      { id:'claude_pro', name:'Claude Pro',       note:'~USD 20', proj:85000 },
+      { id:'kiro',       name:'Kiro',             note:'', proj:0 },
+      { id:'otras_sus',  name:'Otras',            note:'', proj:0 }
     ]
   },
   {
