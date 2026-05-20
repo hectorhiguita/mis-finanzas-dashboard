@@ -1,0 +1,10 @@
+# No subir extractos ni documentos sensibles
+*.pdf
+*.txt
+*.csv
+*.xlsx
+decrypted_*
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cacería de Deudas ⚔️</title>
+<style>
+:root {
+  --bg: #080c18;
+  --card: #0f1629;
+  --card2: #1a2035;
+  --border: #2a3455;
+  --gold: #f5a623;
+  --gold2: #ffd166;
+  --red: #ef4444;
+  --green: #22c55e;
+  --blue: #60a5fa;
+  --purple: #a78bfa;
+  --text: #e2e8f0;
+  --muted: #64748b;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui,sans-serif; min-height:100vh; }
+
+/* ── HEADER ── */
+header {
+  background: linear-gradient(135deg,#0d1117 0%,#161b33 60%,#0a1628 100%);
+  border-bottom: 2px solid var(--gold);
+  padding: 0.875rem 2rem;
+  display: flex; align-items:center; justify-content:space-between;
+  position: sticky; top:0; z-index:100;
+  box-shadow: 0 4px 30px rgba(245,166,35,0.1);
+}
+.logo { font-size:1.4rem; font-weight:900; letter-spacing:-1px; }
+.logo em { color:var(--gold); font-style:normal; }
+.hstats { display:flex; align-items:center; gap:1.5rem; }
+.lvl-wrap { text-align:center; }
+.lvl-label { font-size:0.6rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px; }
+.lvl-badge {
+  width:48px; height:48px; border-radius:50%;
+  background: linear-gradient(135deg,var(--gold),#e07b00);
+  color:#000; font-weight:900; font-size:1.3rem;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow: 0 0 20px rgba(245,166,35,0.4);
+}
+.xp-wrap { min-width:160px; }
+.xp-top { display:flex; justify-content:space-between; font-size:0.65rem; color:var(--muted); margin-bottom:4px; }
+.xp-bar { height:6px; background:var(--card2); border-radius:3px; overflow:hidden; }
+.xp-fill { height:100%; background:linear-gradient(90deg,var(--gold),var(--gold2)); border-radius:3px; transition:width .6s ease; }
+.streak-badge {
+  background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.4);
+  border-radius:20px; padding:4px 12px;
+  font-size:0.8rem; font-weight:700; color:#fca5a5;
+  display:flex; align-items:center; gap:4px;
+}
+
+/* ── LAYOUT ── */
+.page { max-width:1200px; margin:0 auto; padding:2rem; }
+.section { margin-bottom:2.5rem; }
+.sec-title {
+  font-size:1.1rem; font-weight:700; color:var(--gold);
+  display:flex; align-items:center; gap:0.5rem;
+  padding-bottom:0.5rem; margin-bottom:1.25rem;
+  border-bottom:1px solid var(--border);
+}
+
+/* ── FREEDOM BAR ── */
+.freedom-box {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:16px; padding:1.5rem; margin-bottom:2rem;
+}
+.freedom-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem; }
+.freedom-title { font-size:1rem; font-weight:700; }
+.freedom-pct { font-size:1.4rem; font-weight:900; color:var(--gold); }
+.freedom-bar { height:22px; background:var(--card2); border-radius:11px; overflow:hidden; position:relative; }
+.freedom-fill {
+  height:100%;
+  background:linear-gradient(90deg,#7c3aed,var(--gold),var(--green));
+  border-radius:11px; transition:width 1.5s ease;
+  position:relative;
+}
+.freedom-fill::after {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(180deg,rgba(255,255,255,0.15) 0%,transparent 60%);
+  border-radius:11px;
+}
+.milestones {
+  display:flex; justify-content:space-between;
+  margin-top:8px; font-size:0.6rem; color:var(--muted);
+}
+
+/* ── STAT CARDS ── */
+.stat-row { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:2rem; }
+.stat-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:1.25rem; }
+.stat-icon { font-size:1.4rem; margin-bottom:0.4rem; }
+.stat-val { font-size:1.35rem; font-weight:900; color:var(--gold); }
+.stat-lbl { font-size:0.7rem; color:var(--muted); margin-top:3px; }
+
+/* ── STREAK BANNER ── */
+.streak-banner {
+  background:linear-gradient(135deg,#1a0e00,#271500);
+  border:1px solid rgba(249,115,22,0.5); border-radius:14px;
+  padding:1rem 1.5rem; display:flex; align-items:center;
+  justify-content:space-between; margin-bottom:2rem;
+  box-shadow: 0 0 20px rgba(249,115,22,0.08);
+}
+.sb-left { display:flex; align-items:center; gap:1rem; }
+.sb-fire { font-size:2rem; }
+.sb-title { font-size:1rem; font-weight:700; color:#fb923c; }
+.sb-sub { font-size:0.75rem; color:var(--muted); margin-top:3px; }
+.btn-primary {
+  background:linear-gradient(135deg,var(--gold),#e07b00);
+  color:#000; border:none; padding:0.7rem 1.4rem;
+  border-radius:10px; font-weight:700; font-size:0.9rem;
+  cursor:pointer; transition:transform .2s,box-shadow .2s; white-space:nowrap;
+}
+.btn-primary:hover { transform:scale(1.05); box-shadow:0 4px 20px rgba(245,166,35,0.4); }
+
+/* ── BOSS GRID ── */
+.boss-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(310px,1fr)); gap:1.25rem; }
+.boss-card {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:16px; padding:1.4rem; position:relative; overflow:hidden;
+  transition:transform .2s,box-shadow .2s;
+}
+.boss-card:hover { transform:translateY(-3px); box-shadow:0 8px 30px rgba(0,0,0,0.3); }
+.boss-card.is-target {
+  border-color: var(--red);
+  box-shadow: 0 0 25px rgba(239,68,68,0.2), inset 0 0 40px rgba(239,68,68,0.03);
+}
+.boss-card.is-defeated { border-color:var(--green); opacity:0.65; }
+.boss-card.is-unknown { border-color:var(--purple); }
+
+/* Pulse glow on active target */
+.boss-card.is-target::before {
+  content:''; position:absolute; inset:0; border-radius:16px;
+  background:linear-gradient(135deg,rgba(239,68,68,0.05),transparent);
+  pointer-events:none;
+}
+
+.bc-head { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.75rem; }
+.bc-name h3 { font-size:1rem; font-weight:700; }
+.bc-name p { font-size:0.7rem; color:var(--muted); margin-top:2px; }
+.bc-icon { font-size:2.2rem; line-height:1; }
+
+.badge {
+  display:inline-flex; align-items:center; gap:3px;
+  padding:2px 8px; border-radius:20px; font-size:0.65rem; font-weight:700;
+  margin-bottom:0.5rem;
+}
+.badge-target { background:rgba(239,68,68,0.2); color:#fca5a5; }
+.badge-next   { background:rgba(245,166,35,0.15); color:var(--gold); }
+.badge-done   { background:rgba(34,197,94,0.15); color:var(--green); }
+.badge-unk    { background:rgba(167,139,250,0.15); color:var(--purple); }
+.badge-wait   { background:rgba(100,116,139,0.15); color:var(--muted); }
+
+.bc-lore { font-size:0.72rem; color:var(--muted); line-height:1.5; margin-bottom:0.85rem; }
+
+.hp-label { display:flex; justify-content:space-between; font-size:0.65rem; color:var(--muted); margin-bottom:4px; }
+.hp-bar { height:10px; background:var(--card2); border-radius:5px; overflow:hidden; }
+.hp-bar div { height:100%; border-radius:5px; transition:width 1s ease; }
+.hp-red  { background:linear-gradient(90deg,#b91c1c,#ef4444); }
+.hp-ora  { background:linear-gradient(90deg,#b45309,#f59e0b); }
+.hp-grn  { background:linear-gradient(90deg,#15803d,#22c55e); }
+
+.bc-stats { display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-top:0.85rem; }
+.bcs { background:var(--card2); border-radius:8px; padding:0.5rem 0.75rem; }
+.bcs-l { font-size:0.6rem; color:var(--muted); }
+.bcs-v { font-size:0.85rem; font-weight:600; margin-top:2px; }
+
+.mora-tag {
+  background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.3);
+  border-radius:6px; padding:0.4rem 0.6rem; font-size:0.7rem; color:#fca5a5;
+  margin-top:0.75rem; display:flex; align-items:center; gap:5px;
+}
+
+/* ── TIMELINE ── */
+.timeline { padding-left:1.75rem; position:relative; }
+.timeline::before {
+  content:''; position:absolute; left:5px; top:8px; bottom:8px;
+  width:2px; background:var(--border);
+}
+.tl-item { position:relative; margin-bottom:1.5rem; }
+.tl-dot {
+  position:absolute; left:-1.75rem; top:4px;
+  width:12px; height:12px; border-radius:50%;
+  border:2px solid var(--border); background:var(--bg);
+}
+.tl-dot.done  { background:var(--green); border-color:var(--green); }
+.tl-dot.now   { background:var(--gold); border-color:var(--gold); animation:dotpulse 2s infinite; }
+.tl-dot.later { background:var(--card2); }
+.tl-dot.final { background:var(--purple); border-color:var(--purple); width:16px; height:16px; left:calc(-1.75rem - 2px); top:2px; }
+@keyframes dotpulse { 0%,100%{box-shadow:0 0 0 0 rgba(245,166,35,.5)} 50%{box-shadow:0 0 0 8px rgba(245,166,35,0)} }
+.tl-date { font-size:0.65rem; color:var(--gold); font-weight:700; text-transform:uppercase; letter-spacing:.5px; }
+.tl-title { font-size:0.9rem; font-weight:700; margin:2px 0; }
+.tl-desc { font-size:0.75rem; color:var(--muted); }
+.tl-final .tl-title { color:var(--gold); font-size:1.1rem; }
+
+/* ── ACHIEVEMENTS ── */
+.ach-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(175px,1fr)); gap:1rem; }
+.ach-card {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:12px; padding:1rem; text-align:center;
+  transition:transform .2s;
+}
+.ach-card.earned {
+  border-color:var(--gold);
+  background:linear-gradient(135deg,rgba(245,166,35,0.08),var(--card));
+  box-shadow:0 0 15px rgba(245,166,35,0.1);
+}
+.ach-card.locked { opacity:.35; filter:grayscale(1); }
+.ach-icon { font-size:2rem; margin-bottom:6px; }
+.ach-name { font-size:0.8rem; font-weight:700; }
+.ach-desc { font-size:0.65rem; color:var(--muted); margin-top:4px; }
+.ach-xp { font-size:0.65rem; color:var(--gold); margin-top:6px; }
+
+/* ── HISTORY ── */
+.hist-item {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:12px; padding:1rem; margin-bottom:0.75rem;
+}
+.hist-head { display:flex; justify-content:space-between; margin-bottom:6px; }
+.hist-month { font-weight:700; color:var(--gold); font-size:0.9rem; }
+.hist-xp { color:var(--green); font-size:0.85rem; }
+.hist-meta { font-size:0.75rem; color:var(--muted); }
+.hist-notes { font-size:0.8rem; margin-top:6px; }
+
+/* ── MODAL ── */
+.overlay {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,0.85); z-index:500;
+  align-items:center; justify-content:center; padding:1rem;
+  backdrop-filter:blur(4px);
+}
+.overlay.open { display:flex; }
+.modal {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:20px; padding:2rem; width:100%;
+  max-width:580px; max-height:90vh; overflow-y:auto;
+}
+.modal h2 { font-size:1.2rem; color:var(--gold); margin-bottom:1.5rem; }
+.fg { margin-bottom:1rem; }
+.fl { display:block; font-size:0.75rem; color:var(--muted); margin-bottom:4px; }
+.fi {
+  width:100%; background:var(--card2); border:1px solid var(--border);
+  border-radius:8px; padding:0.6rem 0.75rem; color:var(--text); font-size:0.9rem;
+}
+.fi:focus { outline:none; border-color:var(--gold); }
+.debt-row-input {
+  background:var(--card2); border-radius:8px; padding:0.75rem;
+  margin-bottom:0.5rem; display:grid; grid-template-columns:1.2fr 1fr 0.8fr;
+  gap:0.5rem; align-items:center;
+}
+.dri-name { font-size:0.82rem; font-weight:600; }
+.dri-cur  { font-size:0.65rem; color:var(--muted); }
+.diff-row { display:flex; gap:0.5rem; flex-wrap:wrap; }
+.diff-btn {
+  background:var(--card2); border:1px solid var(--border);
+  color:var(--text); padding:0.4rem 0.75rem; border-radius:8px;
+  cursor:pointer; font-size:0.85rem; transition:all .2s;
+}
+.diff-btn.sel { background:var(--gold); color:#000; border-color:var(--gold); }
+.btn-submit {
+  width:100%; padding:0.875rem; margin-top:1rem;
+  background:linear-gradient(135deg,var(--gold),#e07b00);
+  color:#000; border:none; border-radius:10px;
+  font-weight:700; font-size:1rem; cursor:pointer;
+}
+.btn-cancel {
+  width:100%; padding:0.75rem; margin-top:0.5rem;
+  background:transparent; border:1px solid var(--border);
+  color:var(--muted); border-radius:10px; cursor:pointer; font-size:0.85rem;
+}
+.checkbox-label { display:flex; align-items:center; gap:6px; cursor:pointer; font-size:0.75rem; }
+
+/* ── RESULT OVERLAY ── */
+.result-ov {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,0.97); z-index:600;
+  flex-direction:column; align-items:center; justify-content:center;
+  text-align:center; padding:2rem;
+}
+.result-ov.open { display:flex; }
+.res-icon { font-size:5rem; margin-bottom:1rem; animation:popIn .5s ease; }
+.res-title { font-size:2rem; font-weight:900; color:var(--gold); }
+.res-sub { font-size:1rem; color:var(--muted); margin-top:0.4rem; }
+.res-xp { font-size:1.5rem; color:var(--green); font-weight:700; margin-top:1rem; }
+.res-achs { display:flex; gap:1rem; flex-wrap:wrap; justify-content:center; margin:1.5rem 0; }
+.res-ach {
+  background:var(--card); border:2px solid var(--gold);
+  border-radius:12px; padding:0.75rem 1rem;
+  animation:popIn .5s ease backwards;
+}
+.res-summary {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:12px; padding:1rem; text-align:left;
+  max-width:500px; width:100%; margin:0.75rem 0;
+  font-size:0.78rem; line-height:1.7; white-space:pre-wrap;
+  max-height:200px; overflow-y:auto;
+}
+.btn-copy {
+  background:var(--card2); border:1px solid var(--border);
+  color:var(--text); padding:0.5rem 1.25rem;
+  border-radius:8px; cursor:pointer; font-size:0.8rem; margin-top:0.5rem;
+}
+.btn-close-res {
+  background:var(--gold); color:#000; border:none;
+  padding:0.75rem 2.5rem; border-radius:10px;
+  font-weight:700; font-size:1rem; cursor:pointer; margin-top:1rem;
+}
+@keyframes popIn { 0%{transform:scale(0);opacity:0} 80%{transform:scale(1.08)} 100%{transform:scale(1);opacity:1} }
+
+/* ── PARTICLES (defeat celebration) ── */
+.particle {
+  position:fixed; width:8px; height:8px; border-radius:50%;
+  pointer-events:none; animation:fly 1.2s ease forwards; z-index:700;
+}
+@keyframes fly {
+  0%   { transform:translate(0,0) scale(1); opacity:1; }
+  100% { transform:translate(var(--dx),var(--dy)) scale(0); opacity:0; }
+}
+
+/* ── FOOTER ── */
+footer {
+  text-align:center; padding:2rem; font-size:0.7rem; color:var(--muted);
+  border-top:1px solid var(--border);
+}
+.reset-btn {
+  background:transparent; border:none; color:var(--muted);
+  font-size:0.65rem; cursor:pointer; text-decoration:underline; margin-top:0.5rem;
+}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  header { flex-direction:column; gap:0.75rem; }
+  .page { padding:1rem; }
+  .stat-row { grid-template-columns:1fr 1fr; }
+  .boss-grid { grid-template-columns:1fr; }
+  .debt-row-input { grid-template-columns:1fr 1fr; }
+}
+@media(max-width:480px){
+  .stat-row { grid-template-columns:1fr 1fr; }
+  .hstats { gap:0.75rem; }
+  .xp-wrap { min-width:120px; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">⚔️ Cacería de <em>Deudas</em></div>
+  <div class="hstats">
+    <div class="streak-badge">🔥 <span id="h-streak">0</span></div>
+    <div class="xp-wrap">
+      <div class="xp-top">
+        <span>XP: <span id="h-xp">0</span></span>
+        <span>Próx: <span id="h-xpnext">100</span></span>
+      </div>
+      <div class="xp-bar"><div class="xp-fill" id="h-xpfill" style="width:0%"></div></div>
+    </div>
+    <div class="lvl-wrap">
+      <div class="lvl-label">nivel</div>
+      <div class="lvl-badge" id="h-lvl">1</div>
+    </div>
+  </div>
+</header>
+
+<div class="page">
+
+  <!-- FREEDOM BAR -->
+  <div class="freedom-box">
+    <div class="freedom-head">
+      <span class="freedom-title">🎯 Progreso hacia Libertad Financiera</span>
+      <span class="freedom-pct" id="fp-pct">0%</span>
+    </div>
+    <div class="freedom-bar">
+      <div class="freedom-fill" id="fp-fill" style="width:0%"></div>
+    </div>
+    <div class="milestones">
+      <span>Inicio<br>May 2026</span>
+      <span>Nu cerrada<br>Jul 2026</span>
+      <span>BdO TC<br>Dic 2026</span>
+      <span>BBVA Consumo<br>May 2028</span>
+      <span>🏆 Libre<br>Oct 2028</span>
+    </div>
+  </div>
+
+  <!-- STATS ROW -->
+  <div class="stat-row">
+    <div class="stat-card">
+      <div class="stat-icon">💀</div>
+      <div class="stat-val" id="s-defeated">0/5</div>
+      <div class="stat-lbl">Enemigos eliminados</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">⚔️</div>
+      <div class="stat-val" id="s-abonos">$0</div>
+      <div class="stat-lbl">Abonado a capital</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">💰</div>
+      <div class="stat-val" id="s-freed">$0</div>
+      <div class="stat-lbl">Cuota mensual liberada</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">📅</div>
+      <div class="stat-val" id="s-checkins">0</div>
+      <div class="stat-lbl">Reportes mensuales</div>
+    </div>
+  </div>
+
+  <!-- STREAK BANNER -->
+  <div class="streak-banner">
+    <div class="sb-left">
+      <div class="sb-fire">🔥</div>
+      <div>
+        <div class="sb-title" id="sb-title">¡Comienza tu racha hoy!</div>
+        <div class="sb-sub" id="sb-sub">Registra tu primer reporte mensual para ganar XP</div>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="openModal()">📋 Reporte Mensual</button>
+  </div>
+
+  <!-- BOSS GRID -->
+  <div class="section">
+    <div class="sec-title">👹 Enemigos en la Campaña</div>
+    <div class="boss-grid" id="boss-grid"></div>
+  </div>
+
+  <!-- TIMELINE -->
+  <div class="section">
+    <div class="sec-title">🗺️ Hoja de Ruta</div>
+    <div class="timeline" id="timeline"></div>
+  </div>
+
+  <!-- ACHIEVEMENTS -->
+  <div class="section">
+    <div class="sec-title">🏆 Logros</div>
+    <div class="ach-grid" id="ach-grid"></div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="section" id="hist-section" style="display:none">
+    <div class="sec-title">📜 Historial</div>
+    <div id="hist-list"></div>
+  </div>
+
+</div>
+
+<footer>
+  Cacería de Deudas · Plan Financiero Personal 2026–2028<br>
+  <button class="reset-btn" onclick="resetConfirm()">⚠️ Reiniciar progreso</button>
+</footer>
+
+<!-- CHECK-IN MODAL -->
+<div class="overlay" id="modal">
+  <div class="modal">
+    <h2>📋 Reporte Mensual</h2>
+    <div class="fg">
+      <label class="fl">Mes del reporte</label>
+      <input type="month" class="fi" id="inp-month">
+    </div>
+    <div class="fg">
+      <label class="fl">Saldos actuales (desde tus extractos bancarios)</label>
+      <div id="debt-inputs"></div>
+    </div>
+    <div class="fg">
+      <label class="fl">Total abonos extraordinarios a capital este mes ($COP)</label>
+      <input type="number" class="fi" id="inp-abonos" placeholder="0" min="0">
+    </div>
+    <div class="fg">
+      <label class="fl">¿Cómo estuvo el mes? (1 = muy difícil · 5 = pan comido)</label>
+      <div class="diff-row" id="diff-row">
+        <button class="diff-btn" onclick="setDiff(1)">😰 1</button>
+        <button class="diff-btn" onclick="setDiff(2)">😓 2</button>
+        <button class="diff-btn sel" onclick="setDiff(3)">😐 3</button>
+        <button class="diff-btn" onclick="setDiff(4)">😊 4</button>
+        <button class="diff-btn" onclick="setDiff(5)">🎉 5</button>
+      </div>
+    </div>
+    <div class="fg">
+      <label class="fl">Notas del mes (logros, obstáculos, sorpresas)</label>
+      <textarea class="fi" id="inp-notes" rows="3" placeholder="¿Qué pasó este mes?"></textarea>
+    </div>
+    <button class="btn-submit" onclick="submitCheckIn()">⚔️ Registrar y calcular XP</button>
+    <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+  </div>
+</div>
+
+<!-- RESULT OVERLAY -->
+<div class="result-ov" id="result-ov">
+  <div class="res-icon" id="res-icon">⚔️</div>
+  <div class="res-title" id="res-title">¡Golpe registrado!</div>
+  <div class="res-sub" id="res-sub">Mes completado</div>
+  <div class="res-xp" id="res-xp">+100 XP</div>
+  <div class="res-achs" id="res-achs"></div>
+  <div class="res-summary" id="res-summary"></div>
+  <button class="btn-copy" onclick="copySummary()">📋 Copiar resumen para Claude</button>
+  <button class="btn-close-res" onclick="closeResult()">¡Al siguiente mes!</button>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  CONSTANTS
+// ═══════════════════════════════════════════════════
+
+const DEBTS_DEF = [
+  {
+    id:'nu', priority:1, icon:'🩸', name:'Nu TC', boss:'La Sanguijuela',
+    lore:'Pequeña pero letal. En MORA y excedida. La primera en caer para detener el daño al historial.',
+    initBal:2945029, payment:180166, rate:28.5, target:'Jul 2026', color:'#ef4444', hasMora:true
+  },
+  {
+    id:'bbva_tc', priority:2, icon:'👻', name:'BBVA TC', boss:'El Fantasma',
+    lore:'Identidad desconocida. Extracto pendiente. Se incluirá al plan en cuanto llegue el documento.',
+    initBal:null, payment:2187492, rate:null, target:'?', color:'#a78bfa', unknown:true
+  },
+  {
+    id:'bdo_tc', priority:3, icon:'✈️', name:'BdO VISA LATAM', boss:'El Viajero Deudor',
+    lore:'$26M con cupo excedido. Cae en Dic 2026 con el poder turbo activo desde Sep 2026.',
+    initBal:26279705, payment:1454000, rate:28.02, target:'Dic 2026', color:'#f59e0b'
+  },
+  {
+    id:'bbva_c', priority:4, icon:'🗿', name:'BBVA Consumo', boss:'El Gigante de Hierro',
+    lore:'$122M · El jefe final de las tarjetas. Con abonos intensivos cae en Mayo 2028, no en 2031.',
+    initBal:122310023, payment:2873305, rate:28.17, target:'May 2028', color:'#dc2626'
+  },
+  {
+    id:'bdo_v', priority:5, icon:'🚗', name:'BdO Vehículos', boss:'El Rugido del Motor',
+    lore:'$67.5M · El carro. Se aborda último con todo el arsenal liberado de los anteriores.',
+    initBal:67557282, payment:1928509, rate:28.02, target:'Oct 2028', color:'#3b82f6'
+  }
+];
+
+const TIMELINE_DEF = [
+  { date:'Jun 2026', title:'Primera Batalla', desc:'Primer abono a capital de $2.2M a Nu TC', dot:'now' },
+  { date:'Jul 2026', title:'💀 La Sanguijuela cae', desc:'Nu TC CERRADA — libera $180K/mes', dot:'later', debtId:'nu' },
+  { date:'Ago 2026', title:'🔓 Poder desbloqueado', desc:'Medicina baja a $890K → +$1M/mes disponible', dot:'later' },
+  { date:'Sep 2026', title:'⚡ Modo Turbo', desc:'HDI termina → +$1.3M/mes. Total $4.5M/mes para abonos', dot:'later' },
+  { date:'Dic 2026', title:'💀 El Viajero Deudor cae', desc:'BdO VISA LATAM CERRADA — libera $1.45M/mes adicional', dot:'later', debtId:'bdo_tc' },
+  { date:'May 2028', title:'💀 El Gigante de Hierro cae', desc:'BBVA Consumo CERRADO — libera $2.87M/mes adicional', dot:'later', debtId:'bbva_c' },
+  { date:'Oct 2028', title:'🏆 LIBERTAD FINANCIERA', desc:'Todas las deudas pagadas. $0 en cuotas. Para siempre.', dot:'later', isFinal:true }
+];
+
+const ACHS_DEF = [
+  { id:'first_report', icon:'📋', name:'Primer Paso',      desc:'Registraste tu primer reporte mensual',     xp:100 },
+  { id:'first_abono',  icon:'⚔️',  name:'Primer Golpe',    desc:'Realizaste tu primer abono a capital',      xp:200 },
+  { id:'streak_3',     icon:'🔥', name:'Incombustible',    desc:'3 meses consecutivos en meta',              xp:500 },
+  { id:'streak_6',     icon:'⚡', name:'Máquina de Guerra',desc:'6 meses consecutivos en meta',              xp:1000 },
+  { id:'streak_12',    icon:'👑', name:'Leyenda Financiera',desc:'12 meses consecutivos en meta',            xp:3000 },
+  { id:'nu_done',      icon:'💀', name:'Sin Mora',         desc:'Cerraste la tarjeta Nu',                    xp:1000 },
+  { id:'bdo_done',     icon:'✂️',  name:'Viajero Arruinado',desc:'Cerraste el BdO VISA LATAM',              xp:2000 },
+  { id:'bbva_done',    icon:'🗿', name:'El Gigante Cayó',  desc:'Cerraste el BBVA Crédito de Consumo',       xp:5000 },
+  { id:'all_done',     icon:'🏆', name:'¡LIBERTAD TOTAL!', desc:'Cerraste todas las deudas',                 xp:10000 },
+  { id:'ab_5m',        icon:'💰', name:'Cazador Serio',    desc:'$5M acumulados en abonos a capital',        xp:500 },
+  { id:'ab_20m',       icon:'💎', name:'Maestro del Abono',desc:'$20M acumulados en abonos a capital',       xp:1500 },
+  { id:'diff_5',       icon:'🎉', name:'Campeón',          desc:'Mes calificado con dificultad máxima',      xp:150 }
+];
+
+// ═══════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════
+
+function defaultState() {
+  return {
+    xp: 0, streak: 0, totalAbonos: 0,
+    debts: DEBTS_DEF.map(d => ({
+      id:d.id, status:'active',
+      currentBal: d.initBal
+    })),
+    checkIns: [],
+    earned: []
+  };
+}
+
+function load() {
+  try {
+    const s = localStorage.getItem('cdd_v2');
+    return s ? JSON.parse(s) : defaultState();
+  } catch(e) { return defaultState(); }
+}
+
+function save() { localStorage.setItem('cdd_v2', JSON.stringify(S)); }
+
+let S = load();
+let selDiff = 3;
+
+// ═══════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════
+
+function cop(n) {
+  if (n === null || n === undefined) return '?';
+  return '$' + Math.round(n).toLocaleString('es-CO');
+}
+
+function level(xp) {
+  let l = 1;
+  while (xpForLevel(l+1) <= xp) l++;
+  return l;
+}
+
+function xpForLevel(l) { return l * l * 100; }
+
+function xpProgress() {
+  const l = level(S.xp);
+  const cur = xpForLevel(l), nxt = xpForLevel(l+1);
+  return { l, cur, nxt, pct: ((S.xp - cur) / (nxt - cur)) * 100 };
+}
+
+function debtState(id) {
+  return S.debts.find(d => d.id === id) || {};
+}
+
+function debtDef(id) {
+  return DEBTS_DEF.find(d => d.id === id);
+}
+
+function totalInitBal() {
+  return DEBTS_DEF.filter(d => d.initBal).reduce((s,d) => s + d.initBal, 0);
+}
+
+function totalCurBal() {
+  return S.debts.filter(d => d.status !== 'defeated' && d.currentBal)
+    .reduce((s,d) => s + d.currentBal, 0);
+}
+
+function freedomPct() {
+  const init = totalInitBal(), cur = totalCurBal();
+  return Math.max(0, Math.min(100, ((init - cur) / init) * 100));
+}
+
+function getHP(d) {
+  const def = debtDef(d.id);
+  if (!def || !def.initBal || !d.currentBal) return 100;
+  if (d.status === 'defeated') return 0;
+  return Math.min(100, Math.max(0, (d.currentBal / def.initBal) * 100));
+}
+
+function hpClass(pct) {
+  if (pct > 60) return 'hp-red';
+  if (pct > 30) return 'hp-ora';
+  return 'hp-grn';
+}
+
+function activeTarget() {
+  const active = DEBTS_DEF
+    .filter(def => debtState(def.id).status !== 'defeated' && !def.unknown)
+    .sort((a,b) => a.priority - b.priority);
+  return active[0] || null;
+}
+
+// ═══════════════════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════════════════
+
+function renderHeader() {
+  const p = xpProgress();
+  document.getElementById('h-streak').textContent = S.streak > 0 ? S.streak + ' mes' + (S.streak>1?'es':'') : '0';
+  document.getElementById('h-xp').textContent = S.xp.toLocaleString();
+  document.getElementById('h-xpnext').textContent = p.nxt.toLocaleString();
+  document.getElementById('h-xpfill').style.width = p.pct + '%';
+  document.getElementById('h-lvl').textContent = p.l;
+}
+
+function renderFreedom() {
+  const pct = freedomPct();
+  document.getElementById('fp-pct').textContent = pct.toFixed(1) + '%';
+  document.getElementById('fp-fill').style.width = pct + '%';
+}
+
+function renderStats() {
+  const defeated = S.debts.filter(d => d.status === 'defeated').length;
+  document.getElementById('s-defeated').textContent = defeated + '/5';
+  document.getElementById('s-abonos').textContent = cop(S.totalAbonos);
+  const freed = DEBTS_DEF
+    .filter(def => debtState(def.id).status === 'defeated')
+    .reduce((s,d) => s + d.payment, 0);
+  document.getElementById('s-freed').textContent = cop(freed);
+  document.getElementById('s-checkins').textContent = S.checkIns.length;
+}
+
+function renderStreak() {
+  if (S.streak > 0) {
+    document.getElementById('sb-title').textContent =
+      S.streak + ' mes' + (S.streak>1?'es':'') + ' de racha 🔥';
+  }
+  if (S.checkIns.length > 0) {
+    const last = S.checkIns[S.checkIns.length-1];
+    document.getElementById('sb-sub').textContent =
+      'Último reporte: ' + last.month + ' · ¡Sigue así!';
+  }
+}
+
+function renderBossGrid() {
+  const grid = document.getElementById('boss-grid');
+  const target = activeTarget();
+  let html = '';
+
+  DEBTS_DEF.forEach(def => {
+    const ds = debtState(def.id);
+    const hp = getHP(ds);
+    const isTarget = target && target.id === def.id;
+    const isDefeated = ds.status === 'defeated';
+    const isUnknown = !!def.unknown;
+
+    let cardClass = '';
+    if (isDefeated) cardClass = 'is-defeated';
+    else if (isUnknown) cardClass = 'is-unknown';
+    else if (isTarget) cardClass = 'is-target';
+
+    let badge = '';
+    if (isDefeated) badge = '<span class="badge badge-done">✓ DERROTADO</span>';
+    else if (isUnknown) badge = '<span class="badge badge-unk">? PENDIENTE</span>';
+    else if (isTarget) badge = '<span class="badge badge-target">⚔️ OBJETIVO ACTUAL</span>';
+    else badge = '<span class="badge badge-wait">⏳ EN COLA</span>';
+
+    let balDisplay = '';
+    if (isDefeated) balDisplay = '<span style="color:var(--green)">PAGADO ✓</span>';
+    else if (isUnknown) balDisplay = '<span style="color:var(--purple)">Extracto pendiente</span>';
+    else balDisplay = '<span style="color:var(--red)">' + cop(ds.currentBal) + '</span>';
+
+    let hpSection = '';
+    if (!isUnknown) {
+      const hpPct = isDefeated ? 0 : hp;
+      hpSection = '<div class="hp-label"><span>💚 HP restante</span><span>' + hpPct.toFixed(1) + '%</span></div>' +
+        '<div class="hp-bar"><div class="' + hpClass(hp) + '" style="width:' + hpPct + '%"></div></div>';
+    }
+
+    let moraTag = def.hasMora && !isDefeated
+      ? '<div class="mora-tag">⚠️ EN MORA — acumula intereses extra y daña tu historial</div>'
+      : '';
+
+    html += '<div class="boss-card ' + cardClass + '">' +
+      '<div class="bc-head">' +
+        '<div class="bc-name"><h3>' + def.icon + ' ' + def.boss + '</h3>' +
+          '<p>' + def.name + ' · Prioridad #' + def.priority + '</p></div>' +
+        '<div class="bc-icon">' + def.icon + '</div>' +
+      '</div>' +
+      badge +
+      '<div class="bc-lore">' + def.lore + '</div>' +
+      hpSection +
+      '<div class="bc-stats">' +
+        '<div class="bcs"><div class="bcs-l">Saldo actual</div><div class="bcs-v">' + balDisplay + '</div></div>' +
+        '<div class="bcs"><div class="bcs-l">Cuota mensual</div><div class="bcs-v">' + cop(def.payment) + '</div></div>' +
+        '<div class="bcs"><div class="bcs-l">Tasa EA</div><div class="bcs-v">' + (def.rate ? def.rate + '%' : '?') + '</div></div>' +
+        '<div class="bcs"><div class="bcs-l">Meta</div><div class="bcs-v" style="color:var(--gold)">' + def.target + '</div></div>' +
+      '</div>' +
+      moraTag +
+    '</div>';
+  });
+
+  grid.innerHTML = html;
+}
+
+function renderTimeline() {
+  const tl = document.getElementById('timeline');
+  let html = '';
+
+  TIMELINE_DEF.forEach((ev, i) => {
+    let isDone = false;
+    if (ev.debtId) isDone = debtState(ev.debtId).status === 'defeated';
+    if (ev.isFinal) isDone = S.debts.every(d => d.status === 'defeated');
+
+    let dot = isDone ? 'done' : (i === 0 ? 'now' : 'later');
+    let wrapClass = ev.isFinal ? 'tl-item tl-final' : 'tl-item';
+
+    html += '<div class="' + wrapClass + '">' +
+      '<div class="tl-dot ' + (ev.isFinal && !isDone ? 'final' : dot) + '"></div>' +
+      '<div class="tl-date">' + ev.date + '</div>' +
+      '<div class="tl-title">' + ev.title + '</div>' +
+      '<div class="tl-desc">' + ev.desc + '</div>' +
+    '</div>';
+  });
+
+  tl.innerHTML = html;
+}
+
+function renderAchievements() {
+  const grid = document.getElementById('ach-grid');
+  const earnedIds = S.earned.map(a => a.id);
+  let html = '';
+
+  ACHS_DEF.forEach(a => {
+    const isEarned = earnedIds.includes(a.id);
+    html += '<div class="ach-card ' + (isEarned ? 'earned' : 'locked') + '">' +
+      '<div class="ach-icon">' + a.icon + '</div>' +
+      '<div class="ach-name">' + a.name + '</div>' +
+      '<div class="ach-desc">' + a.desc + '</div>' +
+      (isEarned ? '<div class="ach-xp">+' + a.xp + ' XP ✓</div>' : '') +
+    '</div>';
+  });
+
+  grid.innerHTML = html;
+}
+
+function renderHistory() {
+  const sec = document.getElementById('hist-section');
+  const list = document.getElementById('hist-list');
+  if (S.checkIns.length === 0) { sec.style.display = 'none'; return; }
+  sec.style.display = 'block';
+
+  const diffs = ['','😰','😓','😐','😊','🎉'];
+  let html = '';
+  [...S.checkIns].reverse().forEach(ci => {
+    html += '<div class="hist-item">' +
+      '<div class="hist-head"><span class="hist-month">' + ci.month + '</span><span class="hist-xp">+' + ci.xpEarned + ' XP</span></div>' +
+      '<div class="hist-meta">Abonos a capital: ' + cop(ci.abonos) +
+        ' · Dificultad: ' + diffs[ci.diff] + ' · Racha: ' + ci.streakAt + '</div>' +
+      (ci.notes ? '<div class="hist-notes">' + ci.notes + '</div>' : '') +
+    '</div>';
+  });
+  list.innerHTML = html;
+}
+
+function renderAll() {
+  renderHeader();
+  renderFreedom();
+  renderStats();
+  renderStreak();
+  renderBossGrid();
+  renderTimeline();
+  renderAchievements();
+  renderHistory();
+}
+
+// ═══════════════════════════════════════════════════
+//  CHECK-IN MODAL
+// ═══════════════════════════════════════════════════
+
+function openModal() {
+  const now = new Date();
+  document.getElementById('inp-month').value = now.toISOString().slice(0,7);
+  document.getElementById('inp-abonos').value = '';
+  document.getElementById('inp-notes').value = '';
+  selDiff = 3;
+  document.querySelectorAll('.diff-btn').forEach((b,i) => {
+    b.classList.toggle('sel', i+1 === selDiff);
+  });
+
+  const cont = document.getElementById('debt-inputs');
+  let html = '';
+  DEBTS_DEF.forEach(def => {
+    const ds = debtState(def.id);
+    if (ds.status === 'defeated') return;
+    html += '<div class="debt-row-input">' +
+      '<div><div class="dri-name">' + def.icon + ' ' + def.name + '</div>' +
+        '<div class="dri-cur">' + (def.unknown ? 'Extracto pendiente' : 'Actual: ' + cop(ds.currentBal)) + '</div></div>' +
+      '<div><label class="fl">Nuevo saldo ($)</label>' +
+        '<input type="number" class="fi" id="bal-' + def.id + '" placeholder="' + (ds.currentBal||'') + '" style="padding:.35rem">' +
+      '</div>' +
+      '<div>' +
+        '<label class="checkbox-label"><input type="checkbox" id="paid-' + def.id + '"> Cuota pagada</label>' +
+        '<label class="checkbox-label" style="margin-top:4px"><input type="checkbox" id="closed-' + def.id + '"> <span style="color:var(--green)">¡CERRADA!</span></label>' +
+      '</div>' +
+    '</div>';
+  });
+  cont.innerHTML = html;
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+function setDiff(d) {
+  selDiff = d;
+  document.querySelectorAll('.diff-btn').forEach((b,i) => {
+    b.classList.toggle('sel', i+1 === d);
+  });
+}
+
+// ═══════════════════════════════════════════════════
+//  SUBMIT CHECK-IN
+// ═══════════════════════════════════════════════════
+
+function submitCheckIn() {
+  const month = document.getElementById('inp-month').value;
+  if (!month) { alert('Selecciona el mes'); return; }
+
+  const abonos = parseFloat(document.getElementById('inp-abonos').value) || 0;
+  const notes = document.getElementById('inp-notes').value.trim();
+
+  const defeated = [];
+  DEBTS_DEF.forEach(def => {
+    const ds = debtState(def.id);
+    if (ds.status === 'defeated') return;
+    const newBal = parseFloat(document.getElementById('bal-' + def.id)?.value);
+    const isClosed = document.getElementById('closed-' + def.id)?.checked;
+    if (isClosed) {
+      ds.status = 'defeated'; ds.currentBal = 0;
+      defeated.push(def);
+    } else if (!isNaN(newBal) && newBal >= 0) {
+      ds.currentBal = newBal;
+    }
+  });
+
+  // XP calculation
+  let xpGained = 100;
+  xpGained += Math.floor(abonos / 10000);
+  xpGained += S.streak * 50;
+  if (selDiff >= 4) xpGained += 50;
+  if (selDiff === 5) xpGained += 50;
+
+  S.xp += xpGained;
+  S.streak += 1;
+  S.totalAbonos += abonos;
+
+  const ci = { month, abonos, diff:selDiff, notes, xpEarned:xpGained, streakAt:S.streak };
+  S.checkIns.push(ci);
+
+  const newAchs = checkAchievements();
+  save();
+  closeModal();
+  renderAll();
+  showResult(xpGained, defeated, newAchs, ci);
+}
+
+// ═══════════════════════════════════════════════════
+//  ACHIEVEMENTS
+// ═══════════════════════════════════════════════════
+
+function checkAchievements() {
+  const newOnes = [];
+  const earnedIds = S.earned.map(a => a.id);
+
+  function check(id, condition) {
+    if (earnedIds.includes(id)) return;
+    if (!condition) return;
+    const def = ACHS_DEF.find(a => a.id === id);
+    if (!def) return;
+    const entry = {...def, earnedAt: new Date().toISOString()};
+    S.earned.push(entry);
+    S.xp += def.xp;
+    newOnes.push(entry);
+  }
+
+  check('first_report', S.checkIns.length >= 1);
+  check('first_abono', S.totalAbonos > 0);
+  check('streak_3', S.streak >= 3);
+  check('streak_6', S.streak >= 6);
+  check('streak_12', S.streak >= 12);
+  check('nu_done', debtState('nu').status === 'defeated');
+  check('bdo_done', debtState('bdo_tc').status === 'defeated');
+  check('bbva_done', debtState('bbva_c').status === 'defeated');
+  check('all_done', S.debts.every(d => d.status === 'defeated'));
+  check('ab_5m', S.totalAbonos >= 5000000);
+  check('ab_20m', S.totalAbonos >= 20000000);
+  check('diff_5', S.checkIns.some(c => c.diff === 5));
+
+  return newOnes;
+}
+
+// ═══════════════════════════════════════════════════
+//  RESULT OVERLAY
+// ═══════════════════════════════════════════════════
+
+function showResult(xpGained, defeated, newAchs, ci) {
+  const ov = document.getElementById('result-ov');
+  const isBoss = defeated.length > 0;
+  const allDone = S.debts.every(d => d.status === 'defeated');
+
+  document.getElementById('res-icon').textContent = allDone ? '🏆' : isBoss ? '💀' : '⚔️';
+  document.getElementById('res-title').textContent =
+    allDone ? '¡LIBERTAD FINANCIERA!' :
+    isBoss  ? '¡ENEMIGO DERROTADO!' :
+              '¡Golpe Registrado!';
+  document.getElementById('res-sub').textContent =
+    isBoss ? defeated.map(d => d.boss).join(', ') + ' ha caído' :
+             'Racha: ' + S.streak + ' mes' + (S.streak>1?'es':'') + ' consecutivo' + (S.streak>1?'s':'');
+
+  const totalXPThisRound = xpGained + newAchs.reduce((s,a) => s+a.xp, 0);
+  document.getElementById('res-xp').textContent = '+' + totalXPThisRound + ' XP total';
+
+  let achsHtml = '';
+  newAchs.forEach((a,i) => {
+    achsHtml += '<div class="res-ach" style="animation-delay:' + (i*0.15) + 's">' +
+      '<div style="font-size:1.5rem">' + a.icon + '</div>' +
+      '<div style="font-size:0.8rem;font-weight:700">' + a.name + '</div>' +
+      '<div style="font-size:0.65rem;color:var(--gold)">+' + a.xp + ' XP</div></div>';
+  });
+  document.getElementById('res-achs').innerHTML = achsHtml;
+
+  const summary = buildSummary(ci, defeated, newAchs);
+  const el = document.getElementById('res-summary');
+  el.textContent = summary;
+  el.dataset.summary = summary;
+
+  ov.classList.add('open');
+  if (isBoss) spawnParticles();
+}
+
+function buildSummary(ci, defeated, newAchs) {
+  const lines = [
+    '=== REPORTE ' + ci.month + ' ===',
+    'Nivel: ' + level(S.xp) + ' · XP total: ' + S.xp.toLocaleString(),
+    'Racha: ' + S.streak + ' mes' + (S.streak>1?'es':'') + ' consecutivo' + (S.streak>1?'s':''),
+    '',
+    'Abonos a capital este mes: ' + cop(ci.abonos),
+    'Acumulado total abonos: ' + cop(S.totalAbonos),
+    '',
+    'Deudas cerradas: ' + (defeated.length ? defeated.map(d=>d.name).join(', ') : 'Ninguna'),
+    'Dificultad del mes: ' + ci.diff + '/5',
+    ci.notes ? 'Notas: ' + ci.notes : '',
+    '',
+    '--- Saldos actuales ---',
+    ...DEBTS_DEF.map(def => {
+      const ds = debtState(def.id);
+      return def.name + ': ' + (ds.status==='defeated' ? 'PAGADA ✓' : cop(ds.currentBal));
+    }),
+    '',
+    (newAchs.length ? 'Logros nuevos: ' + newAchs.map(a=>a.name).join(', ') : '')
+  ].filter(l => l !== '');
+  return lines.join('\n');
+}
+
+function closeResult() { document.getElementById('result-ov').classList.remove('open'); }
+
+function copySummary() {
+  const txt = document.getElementById('res-summary').dataset.summary;
+  navigator.clipboard.writeText(txt).then(() => {
+    const btn = document.querySelector('.btn-copy');
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copiado al portapapeles';
+    setTimeout(() => btn.textContent = orig, 2500);
+  });
+}
+
+// ═══════════════════════════════════════════════════
+//  PARTICLES
+// ═══════════════════════════════════════════════════
+
+function spawnParticles() {
+  const colors = ['#f5a623','#ffd166','#22c55e','#60a5fa','#a78bfa','#ef4444'];
+  for (let i = 0; i < 40; i++) {
+    setTimeout(() => {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.cssText = [
+        'left:' + (30 + Math.random()*40) + 'vw',
+        'top:' + (20 + Math.random()*30) + 'vh',
+        'background:' + colors[Math.floor(Math.random()*colors.length)],
+        '--dx:' + (Math.random()*300-150) + 'px',
+        '--dy:' + (Math.random()*-300-50) + 'px'
+      ].join(';');
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), 1300);
+    }, i * 25);
+  }
+}
+
+// ═══════════════════════════════════════════════════
+//  RESET
+// ═══════════════════════════════════════════════════
+
+function resetConfirm() {
+  if (confirm('¿Seguro que quieres reiniciar TODO el progreso? Esta acción no se puede deshacer.')) {
+    localStorage.removeItem('cdd_v2');
+    S = defaultState();
+    save();
+    renderAll();
+  }
+}
+
+// ═══════════════════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════════════════
+
+renderAll();
+</script>
+</body>
+</html>
