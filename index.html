@@ -343,6 +343,104 @@ footer {
   font-size:0.65rem; cursor:pointer; text-decoration:underline;
 }
 
+/* ── TABS ── */
+.tab-bar {
+  background:var(--card); border-bottom:2px solid var(--border);
+  display:flex; gap:0;
+}
+.tab-btn {
+  background:none; border:none; border-bottom:2px solid transparent;
+  color:var(--muted); font-size:0.9rem; font-weight:600;
+  padding:0.875rem 1.75rem; cursor:pointer; transition:all .2s;
+  margin-bottom:-2px;
+}
+.tab-btn:hover { color:var(--text); }
+.tab-btn.active { color:var(--gold); border-bottom-color:var(--gold); }
+.tab-content { display:none; }
+.tab-content.active { display:block; }
+
+/* ── BUDGET ── */
+.budget-header {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:16px; padding:1.25rem 1.5rem; margin-bottom:1.5rem;
+  display:grid; grid-template-columns:repeat(4,1fr); gap:1rem;
+}
+.bh-item { text-align:center; }
+.bh-label { font-size:0.65rem; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; }
+.bh-val { font-size:1.2rem; font-weight:900; margin-top:4px; }
+.bh-income { color:var(--green); }
+.bh-proj { color:var(--gold); }
+.bh-real { color:var(--blue); }
+.bh-diff-pos { color:var(--green); }
+.bh-diff-neg { color:var(--red); }
+
+.bcat { margin-bottom:1.25rem; }
+.bcat-head {
+  display:flex; align-items:center; justify-content:space-between;
+  background:var(--card2); border-radius:10px 10px 0 0;
+  padding:0.6rem 1rem; cursor:pointer; user-select:none;
+  border:1px solid var(--border); border-bottom:none;
+}
+.bcat-head:hover { background:var(--border); }
+.bcat-title { font-size:0.85rem; font-weight:700; display:flex; align-items:center; gap:0.5rem; }
+.bcat-totals { font-size:0.75rem; display:flex; gap:1rem; color:var(--muted); }
+.bcat-total-val { font-weight:700; }
+.bcat-body { border:1px solid var(--border); border-radius:0 0 10px 10px; overflow:hidden; }
+
+.brow {
+  display:grid; grid-template-columns:2fr 1fr 1fr 80px;
+  gap:0; align-items:center; border-bottom:1px solid var(--border);
+  padding:0;
+}
+.brow:last-child { border-bottom:none; }
+.brow-head {
+  background:var(--card2);
+  font-size:0.65rem; color:var(--muted); font-weight:700;
+  text-transform:uppercase; letter-spacing:.5px;
+}
+.brow-head .bcell { padding:0.4rem 0.75rem; }
+.bcell { padding:0.6rem 0.75rem; font-size:0.82rem; }
+.bcell-name { display:flex; align-items:center; gap:0.5rem; background:var(--card); }
+.bcell-name-text { }
+.bcell-note { font-size:0.65rem; color:var(--muted); }
+.bcell-proj {
+  background:var(--card); color:var(--muted); font-size:0.82rem;
+  border-right:1px solid var(--border);
+}
+.bcell-proj-edit {
+  width:100%; background:transparent; border:none;
+  color:var(--muted); font-size:0.82rem; padding:0; font-family:inherit;
+  cursor:text;
+}
+.bcell-proj-edit:focus { outline:none; color:var(--text); }
+.bcell-actual { background:var(--card); border-right:1px solid var(--border); }
+.bcell-actual input {
+  width:100%; background:transparent; border:none;
+  color:var(--blue); font-size:0.82rem; padding:0; font-family:inherit;
+  font-weight:600;
+}
+.bcell-actual input:focus { outline:none; }
+.bcell-actual input::placeholder { color:var(--border); font-weight:400; }
+.bcell-diff { background:var(--card); font-weight:700; font-size:0.8rem; text-align:right; }
+.diff-ok { color:var(--green); }
+.diff-over { color:var(--red); }
+.diff-zero { color:var(--muted); }
+
+.budget-actions { display:flex; gap:0.75rem; margin-top:1.25rem; }
+.btn-save-budget {
+  background:linear-gradient(135deg,var(--gold),#e07b00);
+  color:#000; border:none; padding:0.75rem 1.5rem;
+  border-radius:10px; font-weight:700; cursor:pointer; font-size:0.9rem;
+}
+.btn-month-nav {
+  background:var(--card2); border:1px solid var(--border);
+  color:var(--text); padding:0.75rem 1rem;
+  border-radius:10px; cursor:pointer; font-size:0.85rem;
+}
+.month-selector { display:flex; align-items:center; gap:0.75rem; margin-bottom:1.5rem; }
+.month-selector label { font-size:0.8rem; color:var(--muted); }
+.month-selector input { background:var(--card2); border:1px solid var(--border); color:var(--text); border-radius:8px; padding:0.4rem 0.75rem; font-size:0.85rem; }
+
 /* ── RESPONSIVE ── */
 @media(max-width:768px){
   header { flex-direction:column; gap:0.75rem; }
@@ -350,6 +448,9 @@ footer {
   .stat-row { grid-template-columns:1fr 1fr; }
   .boss-grid { grid-template-columns:1fr; }
   .debt-row-input { grid-template-columns:1fr 1fr; }
+  .budget-header { grid-template-columns:1fr 1fr; }
+  .brow { grid-template-columns:2fr 1fr 1fr 60px; }
+  .tab-btn { padding:0.75rem 1rem; font-size:0.8rem; }
 }
 @media(max-width:480px){
   .stat-row { grid-template-columns:1fr 1fr; }
@@ -379,6 +480,12 @@ footer {
   </div>
 </header>
 
+<div class="tab-bar">
+  <button class="tab-btn active" id="tab-btn-campaign" onclick="switchTab('campaign')">⚔️ Campaña</button>
+  <button class="tab-btn" id="tab-btn-budget" onclick="switchTab('budget')">💰 Presupuesto</button>
+</div>
+
+<div id="tab-campaign" class="tab-content active">
 <div class="page">
 
   <!-- FREEDOM BAR -->
@@ -459,6 +566,47 @@ footer {
     <div id="hist-list"></div>
   </div>
 
+</div>
+</div>
+
+<!-- ══════════════════ TAB: PRESUPUESTO ══════════════════ -->
+<div id="tab-budget" class="tab-content">
+<div class="page">
+
+  <div class="month-selector">
+    <label>Mes activo:</label>
+    <input type="month" id="bgt-month" onchange="loadBudgetMonth(this.value)">
+    <button class="btn-month-nav" onclick="navMonth(-1)">◀ Anterior</button>
+    <button class="btn-month-nav" onclick="navMonth(1)">Siguiente ▶</button>
+  </div>
+
+  <div class="budget-header">
+    <div class="bh-item">
+      <div class="bh-label">Ingresos proyectados</div>
+      <div class="bh-val bh-income" id="bh-income">$0</div>
+    </div>
+    <div class="bh-item">
+      <div class="bh-label">Total presupuestado</div>
+      <div class="bh-val bh-proj" id="bh-proj">$0</div>
+    </div>
+    <div class="bh-item">
+      <div class="bh-label">Gastado real</div>
+      <div class="bh-val bh-real" id="bh-real">$0</div>
+    </div>
+    <div class="bh-item">
+      <div class="bh-label">Balance (ingresos − real)</div>
+      <div class="bh-val bh-diff-pos" id="bh-diff">$0</div>
+    </div>
+  </div>
+
+  <!-- Categories rendered by JS -->
+  <div id="bgt-cats"></div>
+
+  <div class="budget-actions">
+    <button class="btn-save-budget" onclick="saveBudgetData()">💾 Guardar presupuesto</button>
+  </div>
+
+</div>
 </div>
 
 <footer>
@@ -1116,9 +1264,238 @@ function resetConfirm() {
 }
 
 // ═══════════════════════════════════════════════════
+//  TABS
+// ═══════════════════════════════════════════════════
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-btn-' + tab).classList.add('active');
+  document.getElementById('tab-' + tab).classList.add('active');
+  if (tab === 'budget') renderBudget();
+}
+
+// ═══════════════════════════════════════════════════
+//  BUDGET — CONSTANTS
+// ═══════════════════════════════════════════════════
+
+const BUDGET_CATS = [
+  {
+    id:'income', label:'💵 Ingresos', isIncome:true,
+    items:[
+      { id:'salary', name:'Salario neto',    note:'Actualizar cada mes', proj:0 },
+      { id:'extra',  name:'Ingresos extras', note:'Freelance, bonos, etc.', proj:0 }
+    ]
+  },
+  { id:'deudas', label:'💳 Deudas', isDebt:true, items:[] },
+  {
+    id:'seguros', label:'🛡️ Seguros',
+    items:[
+      { id:'hdi',       name:'HDI Moto CHJ10H',     note:'Póliza 94528041 · termina Sep 2026', proj:1300000 },
+      { id:'sbs',       name:'SBS Moto (cancelar)',  note:'Póliza 1054169 · pendiente cancelar', proj:576000 },
+      { id:'medicina',  name:'Medicina / EPS',       note:'', proj:0 },
+      { id:'otros_seg', name:'Otros seguros',        note:'', proj:0 }
+    ]
+  },
+  {
+    id:'servicios', label:'💡 Servicios Públicos',
+    items:[
+      { id:'epm1', name:'EPM Ctto 11212651', note:'Promedio histórico', proj:360000 },
+      { id:'epm2', name:'EPM Ctto 2550046',  note:'Otro inmueble', proj:650000 },
+      { id:'inet', name:'Telefonía / Internet', note:'Ingresar manualmente', proj:0 }
+    ]
+  },
+  {
+    id:'suscripciones', label:'📱 Suscripciones',
+    items:[
+      { id:'spotify',    name:'Spotify',      note:'', proj:19900 },
+      { id:'amazon',     name:'Amazon Prime', note:'', proj:0 },
+      { id:'claude_pro', name:'Claude Pro',   note:'~USD 20', proj:85000 },
+      { id:'kiro',       name:'Kiro',         note:'', proj:0 },
+      { id:'otras_sus',  name:'Otras',        note:'', proj:0 }
+    ]
+  },
+  {
+    id:'mercado', label:'🛒 Mercado y Alimentación',
+    items:[
+      { id:'super',        name:'PriceSmart / supermercado', note:'', proj:0 },
+      { id:'restaurantes', name:'Restaurantes / delivery',   note:'', proj:0 }
+    ]
+  },
+  {
+    id:'transporte', label:'🚗 Transporte',
+    items:[
+      { id:'gasolina', name:'Gasolina',    note:'', proj:0 },
+      { id:'uber',     name:'Uber / taxi', note:'', proj:0 }
+    ]
+  },
+  {
+    id:'otros', label:'📦 Otros',
+    items:[
+      { id:'varios', name:'Varios / imprevistos', note:'', proj:0 }
+    ]
+  }
+];
+
+// ═══════════════════════════════════════════════════
+//  BUDGET — STATE
+// ═══════════════════════════════════════════════════
+
+let BS = {};
+let bgtMonth = new Date().toISOString().slice(0, 7);
+
+function loadBS() {
+  try { const s = localStorage.getItem('budget_v1'); BS = s ? JSON.parse(s) : {}; }
+  catch(e) { BS = {}; }
+}
+
+function saveBS() { localStorage.setItem('budget_v1', JSON.stringify(BS)); }
+
+function getItemVal(m, catId, itemId) {
+  if (!BS[m]) BS[m] = {};
+  const key = catId + '_' + itemId;
+  return BS[m][key] || { proj:null, real:null };
+}
+
+function setItemVal(m, catId, itemId, field, val) {
+  if (!BS[m]) BS[m] = {};
+  const key = catId + '_' + itemId;
+  if (!BS[m][key]) BS[m][key] = { proj:null, real:null };
+  BS[m][key][field] = val;
+}
+
+function getDebtItems() {
+  return DEBTS_DEF
+    .filter(def => debtState(def.id).status !== 'defeated')
+    .map(def => ({ id:def.id, name:def.icon+' '+def.name, note:'Cuota fija mensual', proj:def.payment }));
+}
+
+// ═══════════════════════════════════════════════════
+//  BUDGET — NAVIGATION
+// ═══════════════════════════════════════════════════
+
+function navMonth(dir) {
+  const [y, m] = bgtMonth.split('-').map(Number);
+  const d = new Date(y, m - 1 + dir, 1);
+  bgtMonth = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+  document.getElementById('bgt-month').value = bgtMonth;
+  renderBudget();
+}
+
+function loadBudgetMonth(val) { bgtMonth = val; renderBudget(); }
+
+// ═══════════════════════════════════════════════════
+//  BUDGET — RENDER
+// ═══════════════════════════════════════════════════
+
+function renderBudget() {
+  const catsEl = document.getElementById('bgt-cats');
+  if (!catsEl) return;
+
+  let totalIncome = 0, totalProj = 0, totalReal = 0;
+  let html = '';
+
+  BUDGET_CATS.forEach(cat => {
+    const items = cat.isDebt ? getDebtItems() : cat.items;
+    let catProjSum = 0, catRealSum = 0;
+    let rowsHtml = '';
+
+    items.forEach(item => {
+      const saved = getItemVal(bgtMonth, cat.id, item.id);
+      const proj = saved.proj !== null ? saved.proj : item.proj;
+      const real = saved.real !== null ? saved.real : 0;
+      const diff = cat.isIncome ? (real - proj) : (proj - real);
+      const diffClass = diff > 0 ? 'diff-ok' : (diff < 0 ? 'diff-over' : 'diff-zero');
+      catProjSum += proj;
+      catRealSum += real;
+
+      rowsHtml += '<div class="brow">' +
+        '<div class="bcell bcell-name">' +
+          '<div class="bcell-name-text">' + item.name + '</div>' +
+          (item.note ? '<div class="bcell-note">' + item.note + '</div>' : '') +
+        '</div>' +
+        '<div class="bcell bcell-proj">' +
+          '<input class="bcell-proj-edit" type="number" value="' + proj + '" ' +
+            'data-cat="' + cat.id + '" data-item="' + item.id + '" data-field="proj">' +
+        '</div>' +
+        '<div class="bcell bcell-actual">' +
+          '<input type="number" placeholder="0" value="' + (real||'') + '" ' +
+            'data-cat="' + cat.id + '" data-item="' + item.id + '" data-field="real">' +
+        '</div>' +
+        '<div class="bcell bcell-diff"><span class="' + diffClass + '">' +
+          (diff !== 0 ? (diff>0?'+':'-')+cop(Math.abs(diff)) : '—') +
+        '</span></div>' +
+      '</div>';
+    });
+
+    if (cat.isIncome) totalIncome += catProjSum;
+    else { totalProj += catProjSum; totalReal += catRealSum; }
+
+    html += '<div class="bcat">' +
+      '<div class="bcat-head" onclick="toggleCat(\'' + cat.id + '\')">' +
+        '<div class="bcat-title">' + cat.label + '</div>' +
+        '<div class="bcat-totals">' +
+          '<span>Proy: <span class="bcat-total-val" style="color:var(--gold)">' + cop(catProjSum) + '</span></span>' +
+          '<span>Real: <span class="bcat-total-val" style="color:var(--blue)">' + cop(catRealSum) + '</span></span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="bcat-body" id="catB-' + cat.id + '">' +
+        '<div class="brow brow-head">' +
+          '<div class="bcell bcell-name">Concepto</div>' +
+          '<div class="bcell bcell-proj">Proyectado</div>' +
+          '<div class="bcell bcell-actual">Real</div>' +
+          '<div class="bcell bcell-diff">Diferencia</div>' +
+        '</div>' +
+        rowsHtml +
+      '</div>' +
+    '</div>';
+  });
+
+  catsEl.innerHTML = html;
+
+  const balance = totalIncome - totalReal;
+  const balClass = balance >= 0 ? 'bh-diff-pos' : 'bh-diff-neg';
+  document.getElementById('bh-income').textContent = cop(totalIncome);
+  document.getElementById('bh-proj').textContent = cop(totalProj);
+  document.getElementById('bh-real').textContent = cop(totalReal);
+  const diffEl = document.getElementById('bh-diff');
+  diffEl.textContent = (balance < 0 ? '-' : '') + cop(Math.abs(balance));
+  diffEl.className = 'bh-val ' + balClass;
+}
+
+function toggleCat(id) {
+  const body = document.getElementById('catB-' + id);
+  if (body) body.style.display = body.style.display === 'none' ? '' : 'none';
+}
+
+// ═══════════════════════════════════════════════════
+//  BUDGET — SAVE
+// ═══════════════════════════════════════════════════
+
+function saveBudgetData() {
+  BUDGET_CATS.forEach(cat => {
+    const items = cat.isDebt ? getDebtItems() : cat.items;
+    items.forEach(item => {
+      const projEl = document.querySelector(
+        '[data-cat="' + cat.id + '"][data-item="' + item.id + '"][data-field="proj"]');
+      const realEl = document.querySelector(
+        '[data-cat="' + cat.id + '"][data-item="' + item.id + '"][data-field="real"]');
+      if (projEl) setItemVal(bgtMonth, cat.id, item.id, 'proj', parseFloat(projEl.value)||0);
+      if (realEl) setItemVal(bgtMonth, cat.id, item.id, 'real', parseFloat(realEl.value)||0);
+    });
+  });
+  saveBS();
+  renderBudget();
+  const btn = document.querySelector('.btn-save-budget');
+  if (btn) { const o = btn.textContent; btn.textContent = '✅ Guardado'; setTimeout(() => btn.textContent = o, 1500); }
+}
+
+// ═══════════════════════════════════════════════════
 //  BOOT
 // ═══════════════════════════════════════════════════
 
+loadBS();
+document.getElementById('bgt-month').value = bgtMonth;
 renderAll();
 </script>
 </body>
