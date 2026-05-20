@@ -441,6 +441,40 @@ footer {
 .month-selector label { font-size:0.8rem; color:var(--muted); }
 .month-selector input { background:var(--card2); border:1px solid var(--border); color:var(--text); border-radius:8px; padding:0.4rem 0.75rem; font-size:0.85rem; }
 
+/* ── AUTH ── */
+.auth-overlay {
+  position:fixed; inset:0; z-index:9999;
+  background:var(--bg);
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center; padding:2rem;
+}
+.auth-overlay.hidden { display:none; }
+.auth-box {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:20px; padding:2.5rem; width:100%; max-width:380px;
+  text-align:center;
+  box-shadow:0 0 60px rgba(245,166,35,0.08);
+}
+.auth-logo { font-size:3rem; margin-bottom:0.5rem; }
+.auth-title { font-size:1.3rem; font-weight:900; color:var(--gold); margin-bottom:0.25rem; }
+.auth-sub { font-size:0.75rem; color:var(--muted); margin-bottom:2rem; }
+.auth-input {
+  width:100%; background:var(--card2); border:1px solid var(--border);
+  border-radius:10px; padding:0.75rem 1rem; color:var(--text);
+  font-size:1rem; text-align:center; letter-spacing:3px;
+  margin-bottom:1rem; font-family:inherit;
+}
+.auth-input:focus { outline:none; border-color:var(--gold); }
+.auth-btn {
+  width:100%; padding:0.875rem;
+  background:linear-gradient(135deg,var(--gold),#e07b00);
+  color:#000; border:none; border-radius:10px;
+  font-weight:700; font-size:1rem; cursor:pointer;
+  transition:transform .2s,box-shadow .2s;
+}
+.auth-btn:hover { transform:scale(1.02); box-shadow:0 4px 20px rgba(245,166,35,0.3); }
+.auth-err { color:var(--red); font-size:0.8rem; margin-top:0.75rem; min-height:1.2rem; }
+
 /* ── RESPONSIVE ── */
 @media(max-width:768px){
   header { flex-direction:column; gap:0.75rem; }
@@ -460,6 +494,19 @@ footer {
 </style>
 </head>
 <body>
+
+<!-- AUTH OVERLAY -->
+<div id="auth-overlay" class="auth-overlay">
+  <div class="auth-box">
+    <div class="auth-logo">⚔️</div>
+    <div class="auth-title">Cacería de Deudas</div>
+    <div class="auth-sub">Plan financiero personal · Acceso privado</div>
+    <input type="password" class="auth-input" id="auth-input" placeholder="••••••••••••"
+      onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="auth-btn" onclick="doLogin()">🔓 Entrar</button>
+    <div class="auth-err" id="auth-err"></div>
+  </div>
+</div>
 
 <!-- HEADER -->
 <header>
@@ -1262,6 +1309,39 @@ function resetConfirm() {
     renderAll();
   }
 }
+
+// ═══════════════════════════════════════════════════
+//  AUTH
+// ═══════════════════════════════════════════════════
+
+const PWD_HASH = '082739308f968e038a226ce8d65d8ea92ed8bde5b961fc811cde50aa517143e2';
+
+async function sha256(msg) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(msg));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function doLogin() {
+  const val = document.getElementById('auth-input').value;
+  if (!val) return;
+  const hash = await sha256(val);
+  if (hash === PWD_HASH) {
+    sessionStorage.setItem('cdd_auth', '1');
+    document.getElementById('auth-overlay').classList.add('hidden');
+  } else {
+    const err = document.getElementById('auth-err');
+    err.textContent = 'Contraseña incorrecta';
+    document.getElementById('auth-input').value = '';
+    document.getElementById('auth-input').focus();
+    setTimeout(() => err.textContent = '', 3000);
+  }
+}
+
+(function initAuth() {
+  if (sessionStorage.getItem('cdd_auth') === '1') {
+    document.getElementById('auth-overlay').classList.add('hidden');
+  }
+})();
 
 // ═══════════════════════════════════════════════════
 //  TABS
