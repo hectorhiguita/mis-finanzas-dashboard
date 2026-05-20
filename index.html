@@ -475,6 +475,29 @@ footer {
 .auth-btn:hover { transform:scale(1.02); box-shadow:0 4px 20px rgba(245,166,35,0.3); }
 .auth-err { color:var(--red); font-size:0.8rem; margin-top:0.75rem; min-height:1.2rem; }
 
+/* ── SYNC ── */
+.sync-section {
+  margin: 1.25rem auto 0; background:var(--card); border:1px solid var(--border);
+  border-radius:14px; padding:1rem 1.25rem; max-width:560px; text-align:left;
+}
+.sync-title { font-size:0.7rem; color:var(--gold); font-weight:700; margin-bottom:0.75rem; text-transform:uppercase; letter-spacing:.5px; }
+.sync-key-row { display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.75rem; }
+.sync-key-label { font-size:0.72rem; color:var(--muted); white-space:nowrap; }
+.sync-key-val {
+  font-family:monospace; font-size:0.72rem; color:var(--text);
+  background:var(--card2); padding:2px 8px; border-radius:6px;
+  flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; cursor:default;
+}
+.sync-actions { display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.6rem; }
+.sync-btn {
+  background:var(--card2); border:1px solid var(--border); color:var(--text);
+  padding:0.35rem 0.85rem; border-radius:8px; font-size:0.72rem; cursor:pointer; transition:border-color .2s;
+}
+.sync-btn:hover { border-color:var(--gold); }
+.sync-btn.sync-up   { border-color:rgba(34,197,94,0.4); color:var(--green); }
+.sync-btn.sync-down { border-color:rgba(96,165,250,0.4); color:var(--blue); }
+.sync-status { font-size:0.68rem; color:var(--muted); }
+
 /* ── RESPONSIVE ── */
 @media(max-width:768px){
   header { flex-direction:column; gap:0.75rem; }
@@ -666,6 +689,20 @@ footer {
     </label>
     <button class="reset-btn" onclick="resetConfirm()">⚠️ Reiniciar</button>
   </div>
+  <div class="sync-section">
+    <div class="sync-title">☁️ Sincronización Firebase</div>
+    <div class="sync-key-row">
+      <span class="sync-key-label">Clave:</span>
+      <span id="sync-key-display" class="sync-key-val" title="">Inicializando…</span>
+      <button id="btn-copy-key" class="sync-btn" onclick="copySyncKey()">📋 Copiar clave</button>
+      <button class="sync-btn" onclick="importSyncKey()">🔄 Otro dispositivo</button>
+    </div>
+    <div class="sync-actions">
+      <button class="sync-btn sync-up" onclick="syncUp()">☁️ Subir a nube</button>
+      <button class="sync-btn sync-down" onclick="syncDown()">⬇️ Bajar de nube</button>
+    </div>
+    <div id="sync-status" class="sync-status">Iniciando Firebase…</div>
+  </div>
 </footer>
 
 <!-- CHECK-IN MODAL -->
@@ -714,6 +751,11 @@ footer {
   <button class="btn-copy" onclick="copySummary()">📋 Copiar resumen para Claude</button>
   <button class="btn-close-res" onclick="closeResult()">¡Al siguiente mes!</button>
 </div>
+
+<!-- Firebase SDK (compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 
 <script>
 // ═══════════════════════════════════════════════════
@@ -1125,6 +1167,7 @@ function submitCheckIn() {
 
   const newAchs = checkAchievements();
   save();
+  syncUp();
   closeModal();
   renderAll();
   showResult(xpGained, defeated, newAchs, ci);
@@ -1342,6 +1385,111 @@ async function doLogin() {
     document.getElementById('auth-overlay').classList.add('hidden');
   }
 })();
+
+// ═══════════════════════════════════════════════════
+//  FIREBASE SYNC
+// ═══════════════════════════════════════════════════
+
+const FB_CONFIG = {
+  apiKey: "AIzaSyCPeFkm_-llfyN32nsZdQyfKspESwyNG7I",
+  authDomain: "caceria-deudas.firebaseapp.com",
+  projectId: "caceria-deudas",
+  storageBucket: "caceria-deudas.firebasestorage.app",
+  messagingSenderId: "422968886595",
+  appId: "1:422968886595:web:46c7dc31745bcd02399bf6"
+};
+
+let db = null;
+let syncKey = null;
+
+async function initFirebase() {
+  try {
+    firebase.initializeApp(FB_CONFIG);
+    db = firebase.firestore();
+    await firebase.auth().signInAnonymously();
+    syncKey = localStorage.getItem('cdd_sync_key');
+    if (!syncKey) {
+      syncKey = crypto.randomUUID();
+      localStorage.setItem('cdd_sync_key', syncKey);
+    }
+    renderSyncUI();
+    setSyncStatus('☁️ Conectado · listo para sincronizar');
+  } catch(e) {
+    setSyncStatus('⚠️ Sin conexión a Firebase (' + (e.code || e.message) + ')');
+  }
+}
+
+async function syncUp() {
+  if (!db || !syncKey) { setSyncStatus('⚠️ Firebase no disponible'); return; }
+  try {
+    await db.collection('users').doc(syncKey).set({
+      campaign: JSON.parse(localStorage.getItem('cdd_v2') || '{}'),
+      budget:   JSON.parse(localStorage.getItem('budget_v1') || '{}'),
+      syncedAt: new Date().toISOString(),
+      version:  'cdd_v2'
+    });
+    setSyncStatus('✅ Nube actualizada · ' + new Date().toLocaleTimeString('es-CO'));
+  } catch(e) {
+    setSyncStatus('❌ Error al subir: ' + e.message);
+  }
+}
+
+async function syncDown() {
+  if (!db || !syncKey) { setSyncStatus('⚠️ Firebase no disponible'); return; }
+  setSyncStatus('⏳ Descargando...');
+  try {
+    const snap = await db.collection('users').doc(syncKey).get();
+    if (!snap.exists) { setSyncStatus('⚠️ Sin datos en la nube para esta clave'); return; }
+    const data = snap.data();
+    if (data.campaign && Object.keys(data.campaign).length) {
+      localStorage.setItem('cdd_v2', JSON.stringify(data.campaign));
+      S = load();
+    }
+    if (data.budget && Object.keys(data.budget).length) {
+      localStorage.setItem('budget_v1', JSON.stringify(data.budget));
+      loadBS();
+    }
+    renderAll();
+    const fecha = data.syncedAt ? data.syncedAt.slice(0,10) : '?';
+    setSyncStatus('✅ Datos recibidos · última subida: ' + fecha);
+  } catch(e) {
+    setSyncStatus('❌ Error al descargar: ' + e.message);
+  }
+}
+
+function renderSyncUI() {
+  const el = document.getElementById('sync-key-display');
+  if (el && syncKey) {
+    el.textContent = syncKey.slice(0,8) + '…' + syncKey.slice(-4);
+    el.title = syncKey;
+  }
+}
+
+function setSyncStatus(msg) {
+  const el = document.getElementById('sync-status');
+  if (el) el.textContent = msg;
+}
+
+function copySyncKey() {
+  if (!syncKey) return;
+  navigator.clipboard.writeText(syncKey).then(() => {
+    const btn = document.getElementById('btn-copy-key');
+    if (!btn) return;
+    const o = btn.textContent;
+    btn.textContent = '✓ Copiada';
+    setTimeout(() => btn.textContent = o, 2000);
+  });
+}
+
+function importSyncKey() {
+  const newKey = prompt('Pega la clave de sincronización del otro dispositivo:');
+  if (!newKey || newKey.trim().length < 10) return;
+  syncKey = newKey.trim();
+  localStorage.setItem('cdd_sync_key', syncKey);
+  renderSyncUI();
+  setSyncStatus('🔄 Clave actualizada · descargando datos...');
+  syncDown();
+}
 
 // ═══════════════════════════════════════════════════
 //  TABS
@@ -1569,6 +1717,7 @@ function saveBudgetData() {
     });
   });
   saveBS();
+  syncUp();
   renderBudget();
   const btn = document.querySelector('.btn-save-budget');
   if (btn) { const o = btn.textContent; btn.textContent = '✅ Guardado'; setTimeout(() => btn.textContent = o, 1500); }
@@ -1581,6 +1730,7 @@ function saveBudgetData() {
 loadBS();
 document.getElementById('bgt-month').value = bgtMonth;
 renderAll();
+initFirebase();
 </script>
 </body>
 </html>
