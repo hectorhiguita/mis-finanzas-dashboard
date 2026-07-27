@@ -1,10 +1,19 @@
-# No subir extractos ni documentos sensibles
-*.pdf
-*.txt
-*.csv
-*.xlsx
-decrypted_*
+# NOTA: js/firebase-config.js NO se ignora a propósito. Este sitio se publica por
+# GitHub Pages (sirve los archivos del repo tal cual), así que la config de Firebase
+# debe estar versionada para que la app funcione. El apiKey de una app web no es
+# secreto; la seguridad la dan firestore.rules + Auth. Mantén el repo PRIVADO.
 
-# OS
+# Firebase CLI
+.firebase/
+.firebaserc
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# Sistema operativo / editor
 .DS_Store
 Thumbs.db
+.vscode/
+
+# Node (si en el futuro agregas herramientas de build)
+node_modules/

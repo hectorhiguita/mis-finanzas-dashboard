@@ -1,0 +1,13 @@
+rules_version = '2';
+
+// Regla central: cada persona autenticada solo puede leer y escribir
+// el documento que tiene su propio UID como identificador.
+// Nadie puede ver los datos de nadie más, ni siquiera otro usuario
+// autenticado de esta misma app.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /usuarios/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}
