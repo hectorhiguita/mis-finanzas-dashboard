@@ -144,6 +144,43 @@ const migrations = [
       return { changed: true, note: "persona hector: nombre → Alejo" };
     },
   },
+
+  {
+    id: "005-aseo-higiene",
+    describe:
+      "Pre-carga categorías de Aseo e Higiene personal en la lista de mercado " +
+      "con precios reales de PriceSmart (facturas may–jun 2026).",
+    apply(data) {
+      if (!Array.isArray(data.mercadoItems)) {
+        return { changed: false, note: "el documento no tiene mercadoItems" };
+      }
+      const nuevos = [
+        { id: "m23", grupo: "humano", cat: "Aseo", nombre: "Papel higiénico", cantidad: "mes", costo: 54538 },
+        { id: "m24", grupo: "humano", cat: "Aseo", nombre: "Detergente de ropa (Fab)", cantidad: "mes", costo: 58739 },
+        { id: "m25", grupo: "humano", cat: "Aseo", nombre: "Jabón de manos", cantidad: "mes", costo: 45294 },
+        { id: "m26", grupo: "humano", cat: "Higiene personal", nombre: "Shampoo", cantidad: "mes", costo: 37731 },
+        { id: "m27", grupo: "humano", cat: "Higiene personal", nombre: "Jabón corporal (Protex)", cantidad: "mes", costo: 27311 },
+        { id: "m28", grupo: "humano", cat: "Higiene personal", nombre: "Gel de baño", cantidad: "mes", costo: 39412 },
+        { id: "m29", grupo: "humano", cat: "Higiene personal", nombre: "Crema corporal (Eucerin)", cantidad: "$128.487 ~cada 2.5 meses (prorrateado)", costo: 51395 },
+      ];
+      const notes = [];
+      for (const it of nuevos) {
+        if (!data.mercadoItems.find((x) => x.id === it.id)) {
+          data.mercadoItems.push({ ...it });
+          notes.push(`+${it.id} ${it.nombre}`);
+        }
+      }
+      // Subir el sobre de mercado a $1.75M para cubrir aseo+higiene, solo si
+      // sigue en el valor viejo por defecto (no pisa un ajuste manual).
+      const merc = Array.isArray(data.categorias) && data.categorias.find((c) => c.id === "mercado");
+      if (merc && merc.limite === 1500000) {
+        merc.limite = 1750000;
+        merc.semanal = 437500;
+        notes.push("mercado límite → $1.750.000");
+      }
+      return { changed: notes.length > 0, note: notes.join("; ") || "ya estaba al día" };
+    },
+  },
 ];
 
 export default migrations;

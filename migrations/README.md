@@ -79,3 +79,8 @@ No borres ni edites migraciones ya aplicadas: agregá una nueva encima.
   le da a su mamá (gasto fijo, 100% de ella).
 - **004-nombre-alejo** — Renombra la persona `hector` de "Héctor" a "Alejo"
   (solo el nombre visible; el id `hector` se mantiene como llave de datos).
+- **005-aseo-higiene** — Pre-carga categorías Aseo (papel, detergente, jabón de
+  manos) e Higiene personal (shampoo, jabón, gel, crema) en la lista de mercado
+  con precios reales de PriceSmart (~$314.420/mes) y sube el límite de mercado
+  de $1.5M a $1.75M (solo si seguía en el valor viejo) para cubrirlas. Como
+  mercado es compartido, sube el aporte: Alejo ~+$190k, Maritza ~+$60k.

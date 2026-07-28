@@ -28,7 +28,7 @@ export function datosIniciales(){
       {id:'maestria', nombre:'Maestría (Maritza)', limite:700000, tipo:'fijo', dueno:'maritza'},
       {id:'mar_mama', nombre:'Apoyo mamá (Maritza)', limite:200000, tipo:'fijo', dueno:'maritza'},
       // variables (semáforo)
-      {id:'mercado', nombre:'Mercado', limite:1500000, tipo:'variable', semanal:375000, dueno:'compartido'},
+      {id:'mercado', nombre:'Mercado', limite:1750000, tipo:'variable', semanal:437500, dueno:'compartido'},
       {id:'gasolina', nombre:'Gasolina', limite:720000, tipo:'variable', semanal:170000, dueno:'hector'},
       {id:'ocio', nombre:'Ocio sin culpa', limite:300000, tipo:'variable', semanal:75000, dueno:'hector'},
       {id:'colchon', nombre:'Colchón / emergencias', limite:100000, tipo:'fijo', dueno:'hector'}
@@ -83,7 +83,16 @@ export function datosIniciales(){
       {id:'m19', grupo:'perros', cat:'Perros', nombre:'Cuido perros (PriceSmart 20480)', cantidad:'bulto ~20 días', costo:285600},
       {id:'m20', grupo:'perros', cat:'Gatos', nombre:'Comida gato', cantidad:'mes', costo:56095},
       {id:'m21', grupo:'perros', cat:'Gatos', nombre:'Snack gatos', cantidad:'bulto ~2 meses (prorrateado)', costo:61857},
-      {id:'m22', grupo:'perros', cat:'Veterinario', nombre:'Veterinario / imprevistos', cantidad:'mes', costo:10000}
+      {id:'m22', grupo:'perros', cat:'Veterinario', nombre:'Veterinario / imprevistos', cantidad:'mes', costo:10000},
+      // Aseo del hogar (precios reales PriceSmart, facturas may–jun 2026)
+      {id:'m23', grupo:'humano', cat:'Aseo', nombre:'Papel higiénico', cantidad:'mes', costo:54538},
+      {id:'m24', grupo:'humano', cat:'Aseo', nombre:'Detergente de ropa (Fab)', cantidad:'mes', costo:58739},
+      {id:'m25', grupo:'humano', cat:'Aseo', nombre:'Jabón de manos', cantidad:'mes', costo:45294},
+      // Higiene personal (precios reales PriceSmart)
+      {id:'m26', grupo:'humano', cat:'Higiene personal', nombre:'Shampoo', cantidad:'mes', costo:37731},
+      {id:'m27', grupo:'humano', cat:'Higiene personal', nombre:'Jabón corporal (Protex)', cantidad:'mes', costo:27311},
+      {id:'m28', grupo:'humano', cat:'Higiene personal', nombre:'Gel de baño', cantidad:'mes', costo:39412},
+      {id:'m29', grupo:'humano', cat:'Higiene personal', nombre:'Crema corporal (Eucerin)', cantidad:'$128.487 ~cada 2.5 meses (prorrateado)', costo:51395}
     ],
     comprasMercado: {}     // {'2026-07': {m1:true,...}}
   };

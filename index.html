@@ -126,14 +126,14 @@
       <div class="detalleHero" id="mercadoDetalle"></div>
       <div class="filaHero">
         <div><div class="mini">Presupuesto total</div><div class="val" id="mLimite"></div></div>
-        <div><div class="mini">Comida humana</div><div class="val" id="mHumano"></div></div>
+        <div><div class="mini">Humano / hogar</div><div class="val" id="mHumano"></div></div>
         <div><div class="mini">Perros</div><div class="val" id="mPerros"></div></div>
       </div>
     </div>
 
     <div class="carta">
-      <h2>Dieta alta en proteína · 30 días · 2 personas</h2>
-      <p class="desc">Marca cada ítem cuando lo compres. Se reinicia cada mes junto con el mercado.</p>
+      <h2>Lista del hogar · comida, aseo, higiene</h2>
+      <p class="desc">Dieta alta en proteína (2 personas) + productos del hogar. Marca cada ítem cuando lo compres; se reinicia cada mes.</p>
       <div id="listaMercadoHumano"></div>
     </div>
 
@@ -148,11 +148,13 @@
       <p class="desc">Para lo que compres distinto a la lista base (algo especial, un reemplazo, etc.)</p>
       <div class="formGasto">
         <select id="mCatGrupo">
-          <option value="humano">Comida humana</option>
+          <option value="humano">Humano / hogar</option>
           <option value="perros">Perros</option>
         </select>
-        <input id="mNombre" placeholder="Ítem (ej: Pechuga de pollo)">
-        <input id="mCantidad" placeholder="Cantidad (ej: 8 kg)">
+        <input id="mCat" list="catsMercado" placeholder="Categoría (ej: Aseo, Higiene personal)">
+        <datalist id="catsMercado"></datalist>
+        <input id="mNombre" placeholder="Ítem (ej: Jabón de manos)">
+        <input id="mCantidad" placeholder="Cantidad (ej: 2 unidades)">
         <input id="mCosto" type="number" inputmode="numeric" placeholder="Costo mensual (ej: 128000)">
         <button class="btnAgregar" id="btnMercadoItem">Agregar ítem</button>
       </div>

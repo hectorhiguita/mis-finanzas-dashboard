@@ -411,18 +411,26 @@ function renderMercado(){
   $('mLimite').textContent = fmt(limite);
   $('mHumano').textContent = fmt(totalHumano);
   $('mPerros').textContent = fmt(totalPerros);
+
+  // sugerencias de categorías ya existentes para el formulario
+  const dl = $('catsMercado');
+  if(dl){
+    const cats = [...new Set(DATOS.mercadoItems.map(i=>i.cat).filter(Boolean))].sort();
+    dl.innerHTML = cats.map(c=>`<option value="${c}"></option>`).join('');
+  }
 }
 $('btnMercadoItem').addEventListener('click', async ()=>{
   const costo = parseInt($('mCosto').value,10);
   const nombre = $('mNombre').value.trim();
   if(!nombre || !costo || costo<=0){ $('mNombre').focus(); return; }
   const grupo = $('mCatGrupo').value;
+  const cat = $('mCat').value.trim() || (grupo==='perros'?'Perros':'Otros');
   DATOS.mercadoItems.push({
     id:'m'+Date.now().toString(36),
-    grupo, cat: grupo==='perros'?'Perros':'Otros',
+    grupo, cat,
     nombre, cantidad: $('mCantidad').value.trim()||'mes', costo
   });
-  $('mNombre').value=''; $('mCantidad').value=''; $('mCosto').value='';
+  $('mNombre').value=''; $('mCantidad').value=''; $('mCosto').value=''; $('mCat').value='';
   await guardarDatos(UID, DATOS);
   renderMercado();
 });
