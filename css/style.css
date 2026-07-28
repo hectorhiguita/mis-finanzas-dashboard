@@ -124,6 +124,20 @@ nav.tabs button.activo{background:var(--carta);color:var(--verde);box-shadow:0 2
 .cabeceraCat{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--tinta2);font-weight:600;margin:14px 0 6px}
 .cabeceraCat:first-child{margin-top:0}
 
+/* calculadora en vivo: restante y aportes de casa */
+.cajaRestante{border:1px solid var(--borde);border-radius:12px;padding:14px;margin-bottom:12px;background:#F6F8F3}
+.filaR{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:14px;padding:3px 0;color:var(--tinta2)}
+.filaR strong{color:var(--tinta);font-family:'Space Grotesk'}
+.filaR.total{border-top:1px solid var(--borde);margin-top:6px;padding-top:8px;font-size:15px}
+.tarjetaCasa{border:1px solid var(--borde);border-radius:12px;padding:14px;margin-bottom:10px;background:#FAFBF8}
+.tarjetaCasa.pagado{background:#F1F7EE;border-color:var(--verde)}
+.tcTop{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.tcTop strong{font-family:'Space Grotesk';font-size:1.02rem}
+.tcPresup{color:var(--tinta2);font-size:.85rem}
+.tcPresup input,.filaAporte input{width:130px;text-align:right;border:1px solid var(--borde);border-radius:8px;padding:5px 8px;background:#fff;font-family:'Space Grotesk';font-weight:600}
+.tcPresup input{width:120px;padding:4px 7px}
+.filaAporte{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:6px;font-size:14px;color:var(--tinta2)}
+
 .fraseDia{font-size:13.5px;color:var(--tinta2);font-style:italic;text-align:center;padding:4px 12px 0}
 .cargando{min-height:100vh;display:flex;align-items:center;justify-content:center;color:var(--tinta2)}
 @media (max-width:520px){ .hero .num{font-size:28px} .formGasto{grid-template-columns:1fr} }

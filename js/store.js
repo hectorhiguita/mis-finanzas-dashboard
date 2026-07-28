@@ -53,7 +53,8 @@ export function datosIniciales(){
       {id:'mar_lafam', nombre:'Sistecrédito · Lafam (4/6) (Maritza)', cuota:421906, saldo:843812, dueno:'maritza'}
     ],
     gastos: [],           // {id, fecha, cat, monto, nota}
-    pagosMes: {},         // {'2026-07': {bbva:true,...}}
+    pagosMes: {},         // {'2026-07': {bbva:true,...}}  deudas pagadas del mes
+    pagosCasa: {},        // {'2026-07': {arriendo:{pagado:true, hector:1179097, maritza:370903}, ...}}  aportes individuales a compartidos
     checklist: {},        // {'2026-07-27': {n1:true,...}}
     mercadoItems: [
       // Proteínas

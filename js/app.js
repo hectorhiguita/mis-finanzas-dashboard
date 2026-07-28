@@ -193,7 +193,37 @@ function normalizarDatos(d){
   }
   (d.categorias||[]).forEach(c=>{ if(!c.dueno) c.dueno = (c.id==='arriendo'||c.id==='mercado')?'compartido':'hector'; });
   (d.deudas||[]).forEach(x=>{ if(!x.dueno) x.dueno='hector'; });
+  if(!d.pagosCasa) d.pagosCasa = {};
   return d;
+}
+
+/* ---- calculadora en vivo: presupuesto restante por persona ---- */
+// Deudas propias pagadas este mes (excluye las de nómina: ya salen del neto).
+function pagadoDeudasPersona(personaId, mes){
+  const pagos = (DATOS.pagosMes||{})[mes] || {};
+  return DATOS.deudas
+    .filter(d => (d.dueno||'hector')===personaId && !d.nomina && pagos[d.id])
+    .reduce((s,d)=>s+(d.cuota||0), 0);
+}
+// Aportes de esta persona a gastos compartidos marcados como pagados.
+function pagadoCasaPersona(personaId, mes){
+  const pc = (DATOS.pagosCasa||{})[mes] || {};
+  return DATOS.categorias
+    .filter(c => c.dueno==='compartido')
+    .reduce((s,c)=>{ const r = pc[c.id]; return s + (r && r.pagado ? (r[personaId]||0) : 0); }, 0);
+}
+// Fijos propios de la persona (no compartidos) marcados como pagados este mes.
+function pagadoFijosPersona(personaId, mes){
+  const pagos = (DATOS.pagosMes||{})[mes] || {};
+  return DATOS.categorias
+    .filter(c => c.tipo==='fijo' && (c.dueno||'hector')===personaId && pagos[c.id])
+    .reduce((s,c)=>s+(c.limite||0), 0);
+}
+// Lo que le queda del presupuesto tras los pagos marcados este mes.
+function presupuestoRestante(personaId, mes){
+  const p = (DATOS.personas||[]).find(x=>x.id===personaId);
+  if(!p) return 0;
+  return p.ingreso - pagadoDeudasPersona(personaId, mes) - pagadoFijosPersona(personaId, mes) - pagadoCasaPersona(personaId, mes);
 }
 
 /* ================= render ================= */
@@ -259,13 +289,17 @@ function renderPersonas(mIni, mFin){
   const personas = DATOS.personas || [];
   if(personas.length < 2){ cont.innerHTML = ''; cont.closest('.carta')?.classList.add('oculto'); return; }
   cont.closest('.carta')?.classList.remove('oculto');
+  const mes = mesActual();
   cont.innerHTML = personas.map(p=>{
     const disp = disponiblePersona(p.id, mIni, mFin);
     const prop = Math.round(proporcion(p.id) * 100);
     const deudasP = DATOS.deudas.filter(d=>!d.nomina).reduce((s,d)=>s+parteDe(d.dueno, d.cuota, p.id), 0);
     const compartP = DATOS.categorias.filter(c=>c.dueno==='compartido').reduce((s,c)=>s+parteDe('compartido', c.limite, p.id), 0);
     const propiosP = DATOS.categorias.filter(c=>c.tipo==='fijo' && c.dueno===p.id).reduce((s,c)=>s+c.limite, 0);
+    const restante = presupuestoRestante(p.id, mes);
+    const pagado = pagadoDeudasPersona(p.id, mes) + pagadoFijosPersona(p.id, mes) + pagadoCasaPersona(p.id, mes);
     const clr = disp<0 ? 'var(--rojo)' : 'var(--verde)';
+    const clrR = restante<0 ? 'var(--rojo)' : 'var(--verde)';
     return `<div style="border:1px solid var(--borde);border-radius:12px;padding:14px;margin-bottom:10px;background:#FAFBF8">
       <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
         <strong style="font-family:'Space Grotesk';font-size:1.05rem">${p.nombre}</strong>
@@ -275,9 +309,11 @@ function renderPersonas(mIni, mFin){
         Ingreso neto ${fmt(p.ingreso)}<br>
         − compartidos (presup.) ${fmt(compartP)} · fijos propios ${fmt(propiosP)} · deudas ${fmt(deudasP)}
       </div>
-      <div style="font-family:'Space Grotesk';font-weight:600;color:${clr};font-size:1.12rem">
-        Disponible: ${fmt(disp)}
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;border-top:1px solid var(--borde);padding-top:8px">
+        <span style="font-size:.9rem;color:var(--tinta2)">Pagado este mes ${fmt(pagado)}</span>
+        <span style="font-family:'Space Grotesk';font-weight:700;color:${clrR}">Restante ${fmt(restante)}</span>
       </div>
+      <div style="color:var(--tinta2);font-size:.82rem;margin-top:4px">Disponible al cierre (plan): <span style="color:${clr};font-weight:600">${fmt(disp)}</span></div>
     </div>`;
   }).join('');
 }
@@ -414,7 +450,16 @@ function renderDeudasDe(dueno, listaId, totalId){
   const pagos = DATOS.pagosMes[mes];
   const deudas = DATOS.deudas.filter(d=>(d.dueno||'hector')===dueno);
 
-  cont.innerHTML = deudas.map(d=>`
+  const persona = (DATOS.personas||[]).find(x=>x.id===dueno);
+  const pagTotal = pagadoDeudasPersona(dueno, mes) + pagadoFijosPersona(dueno, mes) + pagadoCasaPersona(dueno, mes);
+  const restante = presupuestoRestante(dueno, mes);
+  const resumen = `<div class="cajaRestante">
+    <div class="filaR"><span>Presupuesto${persona?' · '+persona.nombre:''}</span><strong>${fmt(persona?persona.ingreso:0)}</strong></div>
+    <div class="filaR"><span>Pagado este mes (deudas + fijos + casa)</span><span>−${fmt(pagTotal)}</span></div>
+    <div class="filaR total"><strong>Restante</strong><strong style="color:${restante<0?'var(--rojo)':'var(--verde)'}">${fmt(restante)}</strong></div>
+  </div>`;
+
+  const cuerpo = deudas.map(d=>`
     <div class="deuda ${pagos[d.id]?'pagada':''}">
       <div class="top">
         <div><div class="nom">${d.nombre}</div><div class="cuota">Cuota: <input data-cuota="${d.id}" value="${fmt(d.cuota)}" inputmode="numeric" style="width:120px;border:1px solid var(--borde);border-radius:6px;padding:3px 6px;background:#FAFBF8;font-family:'Space Grotesk';font-weight:600">${d.nomina?' · descontada de nómina':''}</div></div>
@@ -430,6 +475,7 @@ function renderDeudasDe(dueno, listaId, totalId){
     </div>
   `).join('') || '<p class="desc">Sin deudas registradas.</p>';
 
+  cont.innerHTML = resumen + cuerpo;
   $(totalId).textContent = fmt(deudas.reduce((s,d)=>s+(parseInt(d.saldo,10)||0),0));
 
   // pago → se guarda solo (acción discreta). No re-render de esta lista para no
@@ -454,8 +500,32 @@ function renderDeudasDe(dueno, listaId, totalId){
     await guardarDatos(UID, DATOS); renderTodo();
   }));
 }
-function renderMisDeudas(){ renderDeudasDe('hector', 'listaMisDeudas', 'totalMisDeudas'); }
-function renderDeudasMaritza(){ renderDeudasDe('maritza', 'listaDeudasMaritza', 'totalDeudasMaritza'); }
+function renderMisDeudas(){ renderDeudasDe('hector', 'listaMisDeudas', 'totalMisDeudas'); renderFijosDe('hector', 'listaFijosHector'); }
+function renderDeudasMaritza(){ renderDeudasDe('maritza', 'listaDeudasMaritza', 'totalDeudasMaritza'); renderFijosDe('maritza', 'listaFijosMaritza'); }
+
+// Gastos fijos propios de una persona, con check de "pagado" que descuenta del restante.
+function renderFijosDe(dueno, listaId){
+  const cont = $(listaId); if(!cont) return;
+  const mes = mesActual();
+  if(!DATOS.pagosMes[mes]) DATOS.pagosMes[mes]={};
+  const pagos = DATOS.pagosMes[mes];
+  const fijos = DATOS.categorias.filter(c=>c.tipo==='fijo' && (c.dueno||'hector')===dueno);
+  cont.innerHTML = fijos.map(c=>`
+    <div class="deuda ${pagos[c.id]?'pagada':''}">
+      <div class="top">
+        <div><div class="nom">${c.nombre}</div></div>
+        <div style="text-align:right;font-family:'Space Grotesk';font-weight:600">${fmt(c.limite)}</div>
+      </div>
+      <label class="chkPagado"><input type="checkbox" data-pagofijo="${c.id}" ${pagos[c.id]?'checked':''}> Pagado este mes</label>
+    </div>
+  `).join('') || '<p class="desc">Sin gastos fijos propios.</p>';
+  cont.querySelectorAll('[data-pagofijo]').forEach(i=>i.addEventListener('change', async ()=>{
+    DATOS.pagosMes[mes][i.dataset.pagofijo] = i.checked;
+    await guardarDatos(UID, DATOS);
+    (dueno==='hector' ? renderMisDeudas : renderDeudasMaritza)();
+    renderResumen();
+  }));
+}
 
 $('btnGuardarMisDeudas').addEventListener('click', ()=>guardarYConfirmar($('btnGuardarMisDeudas')));
 $('btnGuardarDeudasMaritza').addEventListener('click', ()=>guardarYConfirmar($('btnGuardarDeudasMaritza')));
@@ -471,46 +541,65 @@ async function addDeuda(dueno, nombreId, cuotaId, saldoId){
 $('btnAddDeudaHector').addEventListener('click', ()=>addDeuda('hector','ndNombreHector','ndCuotaHector','ndSaldoHector'));
 $('btnAddDeudaMaritza').addEventListener('click', ()=>addDeuda('maritza','ndNombreMaritza','ndCuotaMaritza','ndSaldoMaritza'));
 
-/* ---- Casa: presupuesto compartido con columnas por persona ---- */
+/* ---- Casa: presupuesto compartido, aporte individual + pagado por persona ---- */
 function renderCasa(){
   const cont = $('listaCasa'); if(!cont) return;
+  const mes = mesActual();
+  if(!DATOS.pagosCasa) DATOS.pagosCasa = {};
+  if(!DATOS.pagosCasa[mes]) DATOS.pagosCasa[mes] = {};
+  const pc = DATOS.pagosCasa[mes];
   const personas = DATOS.personas || [];
   const compartidas = DATOS.categorias.filter(c=>c.dueno==='compartido');
 
   if(!compartidas.length){
     cont.innerHTML = '<p class="desc">No hay gastos marcados como compartidos todavía. Marca alguno abajo.</p>';
-  } else {
-    const th = personas.map(p=>`<th style="text-align:right;padding:8px 6px">${p.nombre}<br><span style="font-weight:400;color:var(--tinta2);font-size:.8rem">${Math.round(proporcion(p.id)*100)}%</span></th>`).join('');
-    const filas = compartidas.map(c=>{
-      const cols = personas.map(p=>`<td style="text-align:right;padding:8px 6px;font-family:'Space Grotesk'">${fmt(parteDe('compartido', c.limite, p.id))}</td>`).join('');
-      return `<tr style="border-top:1px solid var(--borde)">
-        <td style="padding:8px 6px">${c.nombre}</td>
-        <td style="text-align:right;padding:8px 6px"><input data-casa="${c.id}" value="${c.limite}" inputmode="numeric" style="width:120px;text-align:right;border:1px solid var(--borde);border-radius:8px;padding:5px 8px;background:#FAFBF8;font-family:'Space Grotesk';font-weight:600"></td>
-        ${cols}
-      </tr>`;
-    }).join('');
-    const totalPresup = compartidas.reduce((s,c)=>s+c.limite,0);
-    const totCols = personas.map(p=>`<td style="text-align:right;padding:8px 6px;font-family:'Space Grotesk';font-weight:700">${fmt(compartidas.reduce((s,c)=>s+parteDe('compartido', c.limite, p.id), 0))}</td>`).join('');
-    cont.innerHTML = `
-      <div style="overflow-x:auto">
-      <table style="width:100%;border-collapse:collapse;font-size:.92rem">
-        <thead><tr style="color:var(--tinta2);text-align:left">
-          <th style="padding:8px 6px">Concepto</th>
-          <th style="text-align:right;padding:8px 6px">Presupuesto</th>
-          ${th}
-        </tr></thead>
-        <tbody>${filas}</tbody>
-        <tfoot><tr style="border-top:2px solid var(--borde)">
-          <td style="padding:8px 6px;font-weight:700">Total compartido</td>
-          <td style="text-align:right;padding:8px 6px;font-family:'Space Grotesk';font-weight:700">${fmt(totalPresup)}</td>
-          ${totCols}
-        </tr></tfoot>
-      </table>
-      </div>`;
-    cont.querySelectorAll('[data-casa]').forEach(i=>i.addEventListener('input', ()=>{
-      const c = DATOS.categorias.find(x=>x.id===i.dataset.casa); if(c) c.limite = vNum(i.value);
-    }));
+    renderCompartido();
+    return;
   }
+
+  const tarjetas = compartidas.map(c=>{
+    if(!pc[c.id]) pc[c.id] = { pagado:false };
+    const reg = pc[c.id];
+    // aporte por defecto = división proporcional (editable después)
+    personas.forEach(p=>{ if(reg[p.id]==null) reg[p.id] = Math.round(parteDe('compartido', c.limite, p.id)); });
+    const aportes = personas.map(p=>`
+      <div class="filaAporte">
+        <span>${p.nombre} paga</span>
+        <input data-aporte="${c.id}:${p.id}" value="${fmt(reg[p.id])}" inputmode="numeric">
+      </div>`).join('');
+    return `<div class="tarjetaCasa ${reg.pagado?'pagado':''}">
+      <div class="tcTop">
+        <strong>${c.nombre}</strong>
+        <span class="tcPresup">Presup. <input data-casa="${c.id}" value="${fmt(c.limite)}" inputmode="numeric"></span>
+      </div>
+      ${aportes}
+      <label class="chkPagado" style="margin-top:8px"><input type="checkbox" data-pagocasa="${c.id}" ${reg.pagado?'checked':''}> Pagado este mes</label>
+    </div>`;
+  }).join('');
+
+  // resumen: cuánto aporta cada quien a la casa (pagado / total)
+  const resumen = personas.map(p=>{
+    const total = compartidas.reduce((s,c)=>s+((pc[c.id]&&pc[c.id][p.id])||0),0);
+    const pagado = pagadoCasaPersona(p.id, mes);
+    return `<div class="filaR"><span>${p.nombre} · aporta a la casa</span><span><strong>${fmt(pagado)}</strong> de ${fmt(total)}</span></div>`;
+  }).join('');
+  cont.innerHTML = `<div class="cajaRestante">${resumen}</div>` + tarjetas;
+
+  cont.querySelectorAll('[data-casa]').forEach(i=>i.addEventListener('input', ()=>{
+    const c = DATOS.categorias.find(x=>x.id===i.dataset.casa); if(c) c.limite = vNum(i.value);
+  }));
+  cont.querySelectorAll('[data-aporte]').forEach(i=>i.addEventListener('input', ()=>{
+    const [cid, pid] = i.dataset.aporte.split(':');
+    if(!pc[cid]) pc[cid] = { pagado:false };
+    pc[cid][pid] = vNum(i.value);
+  }));
+  cont.querySelectorAll('[data-pagocasa]').forEach(i=>i.addEventListener('change', async ()=>{
+    if(!pc[i.dataset.pagocasa]) pc[i.dataset.pagocasa] = { pagado:false };
+    pc[i.dataset.pagocasa].pagado = i.checked;
+    await guardarDatos(UID, DATOS);
+    renderCasa(); renderResumen(); renderMisDeudas(); renderDeudasMaritza();
+  }));
+
   renderCompartido();
 }
 
