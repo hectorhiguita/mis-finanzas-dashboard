@@ -189,7 +189,7 @@ function duenoTag(dueno){
 function normalizarDatos(d){
   if(!d) return d;
   if(!Array.isArray(d.personas)){
-    d.personas = [{id:'hector', nombre:'Héctor', ingreso: (typeof d.ingreso==='number'? d.ingreso : 14050000)}];
+    d.personas = [{id:'hector', nombre:'Alejo', ingreso: (typeof d.ingreso==='number'? d.ingreso : 14050000)}];
   }
   (d.categorias||[]).forEach(c=>{ if(!c.dueno) c.dueno = (c.id==='arriendo'||c.id==='mercado')?'compartido':'hector'; });
   (d.deudas||[]).forEach(x=>{ if(!x.dueno) x.dueno='hector'; });
@@ -423,7 +423,10 @@ function renderDeudasDe(dueno, listaId, totalId){
           <input class="saldoNum" data-saldo="${d.id}" value="${fmt(d.saldo||0)}" inputmode="numeric" style="width:150px;text-align:right;border:1px solid var(--borde);border-radius:8px;padding:5px 8px;background:#FAFBF8">
         </div>
       </div>
-      <label class="chkPagado"><input type="checkbox" data-pago="${d.id}" ${pagos[d.id]?'checked':''} ${d.nomina?'checked disabled':''}> ${d.nomina?'Se paga sola cada mes':'Pagada este mes'}</label>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <label class="chkPagado"><input type="checkbox" data-pago="${d.id}" ${pagos[d.id]?'checked':''} ${d.nomina?'checked disabled':''}> ${d.nomina?'Se paga sola cada mes':'Pagada este mes'}</label>
+        <button class="borrar" data-deldeuda="${d.id}" aria-label="Borrar deuda">✕</button>
+      </div>
     </div>
   `).join('') || '<p class="desc">Sin deudas registradas.</p>';
 
@@ -444,12 +447,29 @@ function renderDeudasDe(dueno, listaId, totalId){
   cont.querySelectorAll('[data-saldo]').forEach(i=>i.addEventListener('input', ()=>{
     const d = DATOS.deudas.find(x=>x.id===i.dataset.saldo); if(d) d.saldo = vNum(i.value);
   }));
+  cont.querySelectorAll('[data-deldeuda]').forEach(b=>b.addEventListener('click', async ()=>{
+    const d = DATOS.deudas.find(x=>x.id===b.dataset.deldeuda);
+    if(!confirm(`¿Borrar la deuda "${d?.nombre||''}"? No se puede deshacer.`)) return;
+    DATOS.deudas = DATOS.deudas.filter(x=>x.id!==b.dataset.deldeuda);
+    await guardarDatos(UID, DATOS); renderTodo();
+  }));
 }
 function renderMisDeudas(){ renderDeudasDe('hector', 'listaMisDeudas', 'totalMisDeudas'); }
 function renderDeudasMaritza(){ renderDeudasDe('maritza', 'listaDeudasMaritza', 'totalDeudasMaritza'); }
 
 $('btnGuardarMisDeudas').addEventListener('click', ()=>guardarYConfirmar($('btnGuardarMisDeudas')));
 $('btnGuardarDeudasMaritza').addEventListener('click', ()=>guardarYConfirmar($('btnGuardarDeudasMaritza')));
+
+// Alta de una deuda nueva para un dueño.
+async function addDeuda(dueno, nombreId, cuotaId, saldoId){
+  const nombre = $(nombreId).value.trim();
+  if(!nombre){ $(nombreId).focus(); return; }
+  DATOS.deudas.push({ id:'d'+Date.now().toString(36), nombre, cuota:vNum($(cuotaId).value), saldo:vNum($(saldoId).value), dueno });
+  $(nombreId).value=''; $(cuotaId).value=''; $(saldoId).value='';
+  await guardarDatos(UID, DATOS); renderTodo();
+}
+$('btnAddDeudaHector').addEventListener('click', ()=>addDeuda('hector','ndNombreHector','ndCuotaHector','ndSaldoHector'));
+$('btnAddDeudaMaritza').addEventListener('click', ()=>addDeuda('maritza','ndNombreMaritza','ndCuotaMaritza','ndSaldoMaritza'));
 
 /* ---- Casa: presupuesto compartido con columnas por persona ---- */
 function renderCasa(){
@@ -494,14 +514,14 @@ function renderCasa(){
   renderCompartido();
 }
 
-// Toggle de "compartido" para categorías propias de Héctor (no toca las de Maritza).
+// Toggle de "compartido" para categorías propias de Alejo (no toca las de Maritza).
 function renderCompartido(){
   const cont = $('listaCompartido'); if(!cont) return;
   const cats = DATOS.categorias.filter(c=>c.dueno==='hector' || c.dueno==='compartido');
   cont.innerHTML = cats.map(c=>`
     <label class="chkPagado" style="margin-top:6px">
       <input type="checkbox" data-comp="${c.id}" ${c.dueno==='compartido'?'checked':''}>
-      ${c.nombre} <span style="color:var(--tinta2)">· ${c.dueno==='compartido'?'compartido':'solo Héctor'}</span>
+      ${c.nombre} <span style="color:var(--tinta2)">· ${c.dueno==='compartido'?'compartido':'solo '+nombrePersona('hector')}</span>
     </label>
   `).join('');
   cont.querySelectorAll('[data-comp]').forEach(i=>i.addEventListener('change', async ()=>{
@@ -517,11 +537,31 @@ function renderAjustes(){
     `<div class="filaAjuste"><label>Ingreso neto · ${p.nombre}</label><input data-ing="${p.id}" value="${p.ingreso}" inputmode="numeric"></div>`
   ).join('');
   DATOS.categorias.forEach(c=>{
-    html += `<div class="filaAjuste"><label>${c.nombre}${duenoTag(c.dueno)} ${c.tipo==='variable'?'(mensual)':''}</label><input data-cat="${c.id}" value="${c.limite}" inputmode="numeric"></div>`;
+    html += `<div class="filaAjuste"><label>${c.nombre}${duenoTag(c.dueno)} ${c.tipo==='variable'?'(mensual)':''}</label><input data-cat="${c.id}" value="${c.limite}" inputmode="numeric"><button class="borrar" data-delcat="${c.id}" aria-label="Borrar categoría">✕</button></div>`;
     if(c.tipo==='variable') html += `<div class="filaAjuste"><label style="color:var(--tinta2);font-weight:400">↳ límite semanal</label><input data-sem="${c.id}" value="${c.semanal}" inputmode="numeric"></div>`;
   });
   $('listaAjustes').innerHTML = html;
+  $('listaAjustes').querySelectorAll('[data-delcat]').forEach(b=>b.addEventListener('click', async ()=>{
+    const c = DATOS.categorias.find(x=>x.id===b.dataset.delcat);
+    if(!confirm(`¿Borrar la categoría "${c?.nombre||''}"? No se puede deshacer.`)) return;
+    DATOS.categorias = DATOS.categorias.filter(x=>x.id!==b.dataset.delcat);
+    await guardarDatos(UID, DATOS); renderTodo();
+  }));
+  // opciones de dueño para el formulario "Agregar categoría"
+  const sel = $('ncDueno');
+  if(sel) sel.innerHTML = (DATOS.personas||[]).map(p=>`<option value="${p.id}">${p.nombre}</option>`).join('') + '<option value="compartido">Compartido</option>';
 }
+$('btnAddCategoria').addEventListener('click', async ()=>{
+  const nombre = $('ncNombre').value.trim();
+  if(!nombre){ $('ncNombre').focus(); return; }
+  const tipo = $('ncTipo').value;      // fijo | variable
+  const limite = vNum($('ncLimite').value);
+  const cat = { id:'c'+Date.now().toString(36), nombre, limite, tipo, dueno: $('ncDueno').value };
+  if(tipo==='variable') cat.semanal = Math.round(limite/4);
+  DATOS.categorias.push(cat);
+  $('ncNombre').value=''; $('ncLimite').value='';
+  await guardarDatos(UID, DATOS); renderTodo();
+});
 $('btnGuardarAjustes').addEventListener('click', async ()=>{
   const v = s => parseInt(String(s).replace(/\D/g,''),10)||0;
   $('listaAjustes').querySelectorAll('input').forEach(i=>{

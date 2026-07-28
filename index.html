@@ -55,7 +55,7 @@
     <button data-tab="semana">Semana</button>
     <button data-tab="mercado">Mercado</button>
     <button data-tab="casa">Casa</button>
-    <button data-tab="misdeudas">Mis deudas</button>
+    <button data-tab="misdeudas">Alejo</button>
     <button data-tab="deudasmaritza">Maritza</button>
     <button data-tab="ajustes">Ajustes</button>
   </nav>
@@ -174,14 +174,24 @@
     </div>
   </section>
 
-  <!-- MIS DEUDAS (Héctor) -->
+  <!-- MIS DEUDAS (Alejo) -->
   <section id="tab-misdeudas" class="oculto">
     <div class="carta">
-      <h2>Mis deudas (Héctor)</h2>
+      <h2>Mis deudas (Alejo)</h2>
       <p class="desc">Marca cada pago cuando salga (se guarda solo). Los cambios de cuota o saldo se guardan con el botón.</p>
       <div id="listaMisDeudas"></div>
-      <div class="totalDeuda"><span>Deuda total · Héctor</span><span class="num" id="totalMisDeudas">$0</span></div>
+      <div class="totalDeuda"><span>Deuda total · Alejo</span><span class="num" id="totalMisDeudas">$0</span></div>
       <button class="btnSecundario" id="btnGuardarMisDeudas" style="margin-top:14px">Guardar cambios</button>
+    </div>
+    <div class="carta">
+      <h2>Agregar deuda</h2>
+      <p class="desc">Suma una deuda nueva a tu lista.</p>
+      <div class="formGasto">
+        <input id="ndNombreHector" placeholder="Nombre (ej: Tarjeta Falabella)">
+        <input id="ndCuotaHector" type="number" inputmode="numeric" placeholder="Cuota mensual">
+        <input id="ndSaldoHector" type="number" inputmode="numeric" placeholder="Saldo actual">
+        <button class="btnAgregar" id="btnAddDeudaHector">Agregar deuda</button>
+      </div>
     </div>
   </section>
 
@@ -194,6 +204,16 @@
       <div class="totalDeuda"><span>Deuda total · Maritza</span><span class="num" id="totalDeudasMaritza">$0</span></div>
       <button class="btnSecundario" id="btnGuardarDeudasMaritza" style="margin-top:14px">Guardar cambios</button>
     </div>
+    <div class="carta">
+      <h2>Agregar deuda</h2>
+      <p class="desc">Suma una deuda nueva a la lista de Maritza.</p>
+      <div class="formGasto">
+        <input id="ndNombreMaritza" placeholder="Nombre (ej: Tarjeta Éxito)">
+        <input id="ndCuotaMaritza" type="number" inputmode="numeric" placeholder="Cuota mensual">
+        <input id="ndSaldoMaritza" type="number" inputmode="numeric" placeholder="Saldo actual">
+        <button class="btnAgregar" id="btnAddDeudaMaritza">Agregar deuda</button>
+      </div>
+    </div>
   </section>
 
   <!-- AJUSTES -->
@@ -203,6 +223,20 @@
       <p class="desc">Ajusta límites cuando cambie tu realidad, no cuando tengas un mal día.</p>
       <div id="listaAjustes"></div>
       <button class="btnSecundario" id="btnGuardarAjustes" style="margin-top:14px">Guardar cambios</button>
+    </div>
+    <div class="carta">
+      <h2>Agregar categoría</h2>
+      <p class="desc">Crea una nueva línea de presupuesto (fija o variable) y a quién le corresponde.</p>
+      <div class="formGasto">
+        <input id="ncNombre" placeholder="Nombre (ej: Gimnasio)">
+        <input id="ncLimite" type="number" inputmode="numeric" placeholder="Límite mensual">
+        <select id="ncTipo">
+          <option value="fijo">Fija</option>
+          <option value="variable">Variable (con semáforo)</option>
+        </select>
+        <select id="ncDueno"></select>
+        <button class="btnAgregar" id="btnAddCategoria">Agregar categoría</button>
+      </div>
     </div>
     <div class="carta">
       <h2>Seguridad y datos</h2>

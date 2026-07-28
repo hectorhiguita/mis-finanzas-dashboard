@@ -127,6 +127,23 @@ const migrations = [
       return { changed: true, note: "+cat mar_mama (apoyo mamá Maritza $200.000)" };
     },
   },
+
+  {
+    id: "004-nombre-alejo",
+    describe:
+      "Renombra a la persona 'hector' de 'Héctor' a 'Alejo' (solo el nombre " +
+      "visible; el id 'hector' se mantiene como llave de datos).",
+    apply(data) {
+      if (!Array.isArray(data.personas)) {
+        return { changed: false, note: "el documento no tiene personas" };
+      }
+      const p = data.personas.find((x) => x.id === "hector");
+      if (!p) return { changed: false, note: "no existe la persona hector" };
+      if (p.nombre === "Alejo") return { changed: false, note: "ya es Alejo" };
+      p.nombre = "Alejo";
+      return { changed: true, note: "persona hector: nombre → Alejo" };
+    },
+  },
 ];
 
 export default migrations;

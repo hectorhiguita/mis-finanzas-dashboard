@@ -9,13 +9,13 @@ import {
   doc, getDoc, setDoc, deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
-/* ================= datos iniciales (tu realidad, Héctor) ================= */
+/* ================= datos iniciales (tu realidad, Alejo) ================= */
 export function datosIniciales(){
   return {
     // Hogar de dos personas. Los gastos con dueno:'compartido' se dividen
     // proporcional al ingreso neto de cada quien (ver app.js: proporcion()).
     personas: [
-      {id:'hector', nombre:'Héctor', ingreso:14050000},
+      {id:'hector', nombre:'Alejo', ingreso:14050000},
       {id:'maritza', nombre:'Maritza', ingreso:4419560} // neto: $5.000.000 − seguridad social ($580.440) por contrato de prestación de servicios en el ITM
     ],
     categorias: [

@@ -77,3 +77,5 @@ No borres ni edites migraciones ya aplicadas: agregá una nueva encima.
   proporcional al ingreso (Héctor 76%, Maritza 24%).
 - **003-apoyo-mama-maritza** — Agrega el apoyo mensual de $200.000 que Maritza
   le da a su mamá (gasto fijo, 100% de ella).
+- **004-nombre-alejo** — Renombra la persona `hector` de "Héctor" a "Alejo"
+  (solo el nombre visible; el id `hector` se mantiene como llave de datos).

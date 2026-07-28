@@ -89,8 +89,8 @@ nav.tabs button.activo{background:var(--carta);color:var(--verde);box-shadow:0 2
 .mov .info .cat{font-weight:600;font-size:14px}
 .mov .info .nota{font-size:12px;color:var(--tinta2)}
 .mov .monto{font-family:'Space Grotesk';font-weight:600;white-space:nowrap}
-.mov .borrar{background:none;color:var(--tinta2);font-size:16px;padding:4px 8px}
-.mov .borrar:hover{color:var(--rojo)}
+.borrar{background:none;border:none;cursor:pointer;color:var(--tinta2);font-size:16px;padding:4px 8px;line-height:1}
+.borrar:hover{color:var(--rojo)}
 
 /* deudas */
 .deuda{border:1.5px solid var(--borde);border-radius:12px;padding:14px 16px;margin-bottom:10px}
