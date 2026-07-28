@@ -95,6 +95,7 @@ onAuthStateChanged(auth, async (user)=>{
       DATOS = datosIniciales();
       await guardarDatos(UID, DATOS);
     }
+    DATOS = normalizarDatos(DATOS);
     entrar(user.email);
   } else {
     UID = null; DATOS = null;
@@ -138,6 +139,48 @@ function rangoSemana(){
   return [i,f];
 }
 
+/* ---- hogar por persona ---- */
+function ingresoTotal(){ return (DATOS.personas||[]).reduce((s,p)=>s+(p.ingreso||0),0); }
+function proporcion(personaId){
+  const tot = ingresoTotal();
+  const p = (DATOS.personas||[]).find(x=>x.id===personaId);
+  return (tot && p) ? p.ingreso/tot : 0;
+}
+// Cuánto de `valor` le toca a `personaId` según el dueño del gasto/deuda.
+function parteDe(dueno, valor, personaId){
+  const d = dueno || 'hector';
+  if(d === personaId) return valor;
+  if(d === 'compartido') return valor * proporcion(personaId);
+  return 0;
+}
+function disponiblePersona(personaId, mIni, mFin){
+  const p = (DATOS.personas||[]).find(x=>x.id===personaId);
+  if(!p) return 0;
+  let d = p.ingreso;
+  DATOS.deudas.filter(x=>!x.nomina).forEach(x=> d -= parteDe(x.dueno, x.cuota, personaId));
+  DATOS.categorias.filter(c=>c.tipo==='fijo').forEach(c=> d -= parteDe(c.dueno, c.limite, personaId));
+  DATOS.categorias.filter(c=>c.tipo==='variable').forEach(c=> d -= parteDe(c.dueno, gastosDe(c.id,mIni,mFin), personaId));
+  return d;
+}
+function nombrePersona(id){ const p=(DATOS.personas||[]).find(x=>x.id===id); return p?p.nombre:id; }
+function duenoTag(dueno){
+  if(!dueno || dueno==='hector') return '';
+  if(dueno==='compartido') return ' · compartido';
+  return ' · ' + nombrePersona(dueno);
+}
+// Deja cualquier documento (incluso los viejos de una sola persona) en un
+// estado que la UI puede renderizar sin romperse. No inventa a Maritza: eso
+// lo hace la migración 002 de forma explícita.
+function normalizarDatos(d){
+  if(!d) return d;
+  if(!Array.isArray(d.personas)){
+    d.personas = [{id:'hector', nombre:'Héctor', ingreso: (typeof d.ingreso==='number'? d.ingreso : 14050000)}];
+  }
+  (d.categorias||[]).forEach(c=>{ if(!c.dueno) c.dueno = (c.id==='arriendo'||c.id==='mercado')?'compartido':'hector'; });
+  (d.deudas||[]).forEach(x=>{ if(!x.dueno) x.dueno='hector'; });
+  return d;
+}
+
 /* ================= render ================= */
 function renderTodo(){ renderResumen(); renderSemana(); renderMercado(); renderDeudas(); renderAjustes(); }
 
@@ -148,17 +191,20 @@ function renderResumen(){
   const variables = DATOS.categorias.filter(c=>c.tipo==='variable');
   const limVar = variables.reduce((s,c)=>s+c.limite,0);
   const gastadoVar = variables.reduce((s,c)=>s+gastosDe(c.id,mIni,mFin),0);
-  const disponible = DATOS.ingreso - cuotasNoNomina - fijos - gastadoVar;
+  const disponible = ingresoTotal() - cuotasNoNomina - fijos - gastadoVar;
 
   const el = $('disponibleMes');
   el.textContent = fmt(disponible);
   el.className = 'num ' + (disponible<0 ? 'negativo' : 'positivo');
   $('detalleHero').textContent = disponible>=0
-    ? 'Lo que queda de tus variables + margen del mes. Si sobra al cierre, va a matar sobrecupo.'
-    : 'Este mes vas por encima del plan. Sin drama: la próxima semana compensa.';
-  $('hIngreso').textContent = fmt(DATOS.ingreso);
+    ? 'Lo que le queda al hogar tras fijos y deudas. Si sobra al cierre, va a matar sobrecupo.'
+    : 'Este mes el hogar va por encima del plan. Sin drama: la próxima semana compensa.';
+  $('hIngreso').textContent = fmt(ingresoTotal());
   $('hDeudas').textContent = fmt(cuotasNoNomina);
   $('hGastado').textContent = fmt(gastadoVar) + ' / ' + fmt(limVar);
+
+  // desglose por persona
+  renderPersonas(mIni, mFin);
 
   // categorías
   let html='';
@@ -168,7 +214,7 @@ function renderResumen(){
     const clase = c.tipo!=='variable' ? '' : (gastado>c.limite?'rojo':(pct>=80?'alerta':''));
     const nota = c.tipo==='variable' ? `${fmt(gastado)} de ${fmt(c.limite)}` : `${fmt(c.limite)} · fijo`;
     html += `<div class="catFila">
-      <div class="catTop"><span class="nombre">${c.nombre}</span><span class="cifras">${nota}</span></div>
+      <div class="catTop"><span class="nombre">${c.nombre}${duenoTag(c.dueno)}</span><span class="cifras">${nota}</span></div>
       <div class="barra"><div class="relleno ${clase}" style="width:${c.tipo==='variable'?pct:100}%"></div></div>
     </div>`;
   });
@@ -190,6 +236,35 @@ function renderResumen(){
     DATOS.gastos = DATOS.gastos.filter(g=>g.id!==b.dataset.id);
     await guardarDatos(UID, DATOS); renderTodo();
   }));
+}
+
+function renderPersonas(mIni, mFin){
+  const cont = $('listaPersonas');
+  if(!cont) return;
+  const personas = DATOS.personas || [];
+  if(personas.length < 2){ cont.innerHTML = ''; cont.closest('.carta')?.classList.add('oculto'); return; }
+  cont.closest('.carta')?.classList.remove('oculto');
+  cont.innerHTML = personas.map(p=>{
+    const disp = disponiblePersona(p.id, mIni, mFin);
+    const prop = Math.round(proporcion(p.id) * 100);
+    const deudasP = DATOS.deudas.filter(d=>!d.nomina).reduce((s,d)=>s+parteDe(d.dueno, d.cuota, p.id), 0);
+    const compartP = DATOS.categorias.filter(c=>c.dueno==='compartido').reduce((s,c)=>s+parteDe('compartido', c.limite, p.id), 0);
+    const propiosP = DATOS.categorias.filter(c=>c.tipo==='fijo' && c.dueno===p.id).reduce((s,c)=>s+c.limite, 0);
+    const clr = disp<0 ? 'var(--rojo)' : 'var(--verde)';
+    return `<div style="border:1px solid var(--borde);border-radius:12px;padding:14px;margin-bottom:10px;background:#FAFBF8">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+        <strong style="font-family:'Space Grotesk';font-size:1.05rem">${p.nombre}</strong>
+        <span style="color:var(--tinta2);font-size:.82rem">${prop}% del ingreso · aporta a compartidos</span>
+      </div>
+      <div style="color:var(--tinta2);font-size:.88rem;margin:6px 0 8px;line-height:1.5">
+        Ingreso neto ${fmt(p.ingreso)}<br>
+        − compartidos (presup.) ${fmt(compartP)} · fijos propios ${fmt(propiosP)} · deudas ${fmt(deudasP)}
+      </div>
+      <div style="font-family:'Space Grotesk';font-weight:600;color:${clr};font-size:1.12rem">
+        Disponible: ${fmt(disp)}
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function renderSemana(){
@@ -308,10 +383,10 @@ function renderDeudas(){
   $('listaDeudas').innerHTML = DATOS.deudas.map(d=>`
     <div class="deuda ${pagos[d.id]?'pagada':''}">
       <div class="top">
-        <div><div class="nom">${d.nombre}</div><div class="cuota">Cuota: <input data-cuota="${d.id}" value="${d.cuota}" inputmode="numeric" style="width:100px;border:1px solid var(--borde);border-radius:6px;padding:3px 6px;background:#FAFBF8;font-family:'Space Grotesk';font-weight:600">${d.nomina?' · descontada de nómina':''}</div></div>
+        <div><div class="nom">${d.nombre}</div><div class="cuota">Cuota: <input data-cuota="${d.id}" value="${fmt(d.cuota)}" inputmode="numeric" style="width:120px;border:1px solid var(--borde);border-radius:6px;padding:3px 6px;background:#FAFBF8;font-family:'Space Grotesk';font-weight:600">${d.nomina?' · descontada de nómina':''}</div></div>
         <div style="text-align:right">
           <div class="cuota">Saldo</div>
-          <input class="saldoNum" data-saldo="${d.id}" value="${d.saldo||0}" inputmode="numeric" style="width:130px;text-align:right;border:1px solid var(--borde);border-radius:8px;padding:5px 8px;background:#FAFBF8">
+          <input class="saldoNum" data-saldo="${d.id}" value="${fmt(d.saldo||0)}" inputmode="numeric" style="width:150px;text-align:right;border:1px solid var(--borde);border-radius:8px;padding:5px 8px;background:#FAFBF8">
         </div>
       </div>
       <label class="chkPagado"><input type="checkbox" data-pago="${d.id}" ${pagos[d.id]?'checked':''} ${d.nomina?'checked disabled':''}> ${d.nomina?'Se paga sola cada mes':'Pagada este mes'}</label>
@@ -337,9 +412,11 @@ function renderDeudas(){
 }
 
 function renderAjustes(){
-  let html = `<div class="filaAjuste"><label>Ingreso mensual neto</label><input data-aj="ingreso" value="${DATOS.ingreso}" inputmode="numeric"></div>`;
+  let html = (DATOS.personas||[]).map(p=>
+    `<div class="filaAjuste"><label>Ingreso neto · ${p.nombre}</label><input data-ing="${p.id}" value="${p.ingreso}" inputmode="numeric"></div>`
+  ).join('');
   DATOS.categorias.forEach(c=>{
-    html += `<div class="filaAjuste"><label>${c.nombre} ${c.tipo==='variable'?'(mensual)':''}</label><input data-cat="${c.id}" value="${c.limite}" inputmode="numeric"></div>`;
+    html += `<div class="filaAjuste"><label>${c.nombre}${duenoTag(c.dueno)} ${c.tipo==='variable'?'(mensual)':''}</label><input data-cat="${c.id}" value="${c.limite}" inputmode="numeric"></div>`;
     if(c.tipo==='variable') html += `<div class="filaAjuste"><label style="color:var(--tinta2);font-weight:400">↳ límite semanal</label><input data-sem="${c.id}" value="${c.semanal}" inputmode="numeric"></div>`;
   });
   $('listaAjustes').innerHTML = html;
@@ -347,7 +424,7 @@ function renderAjustes(){
 $('btnGuardarAjustes').addEventListener('click', async ()=>{
   const v = s => parseInt(String(s).replace(/\D/g,''),10)||0;
   $('listaAjustes').querySelectorAll('input').forEach(i=>{
-    if(i.dataset.aj==='ingreso') DATOS.ingreso = v(i.value);
+    if(i.dataset.ing){ const p=DATOS.personas.find(x=>x.id===i.dataset.ing); if(p) p.ingreso=v(i.value); }
     if(i.dataset.cat){ const c=DATOS.categorias.find(x=>x.id===i.dataset.cat); if(c) c.limite=v(i.value); }
     if(i.dataset.sem){ const c=DATOS.categorias.find(x=>x.id===i.dataset.sem); if(c) c.semanal=v(i.value); }
   });

@@ -1,0 +1,3 @@
+node_modules/
+# Backups del documento Firestore: contienen datos financieros personales, no se versionan.
+backups/

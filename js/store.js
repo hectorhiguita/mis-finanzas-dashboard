@@ -12,32 +12,45 @@ import {
 /* ================= datos iniciales (tu realidad, Héctor) ================= */
 export function datosIniciales(){
   return {
-    ingreso: 14050000,
+    // Hogar de dos personas. Los gastos con dueno:'compartido' se dividen
+    // proporcional al ingreso neto de cada quien (ver app.js: proporcion()).
+    personas: [
+      {id:'hector', nombre:'Héctor', ingreso:14050000},
+      {id:'maritza', nombre:'Maritza', ingreso:4419560} // neto: $5.000.000 − seguridad social ($580.440) por contrato de prestación de servicios en el ITM
+    ],
     categorias: [
       // fijas (no se registran gastos, solo informan)
-      {id:'arriendo', nombre:'Arriendo', limite:1550000, tipo:'fijo'},
-      {id:'epm1', nombre:'EPM casa', limite:210000, tipo:'fijo'},
-      {id:'epm2', nombre:'EPM mamá', limite:200000, tipo:'fijo'},
-      {id:'agua', nombre:'Agua', limite:75000, tipo:'fijo'},
-      {id:'gaspipeta', nombre:'Gas pipeta', limite:200000, tipo:'fijo'},
+      {id:'arriendo', nombre:'Arriendo', limite:1550000, tipo:'fijo', dueno:'compartido'},
+      {id:'epm1', nombre:'EPM casa', limite:210000, tipo:'fijo', dueno:'hector'},
+      {id:'epm2', nombre:'EPM mamá', limite:200000, tipo:'fijo', dueno:'hector'},
+      {id:'agua', nombre:'Agua', limite:75000, tipo:'fijo', dueno:'hector'},
+      {id:'gaspipeta', nombre:'Gas pipeta', limite:200000, tipo:'fijo', dueno:'hector'},
+      {id:'maestria', nombre:'Maestría (Maritza)', limite:700000, tipo:'fijo', dueno:'maritza'},
+      {id:'mar_mama', nombre:'Apoyo mamá (Maritza)', limite:200000, tipo:'fijo', dueno:'maritza'},
       // variables (semáforo)
-      {id:'mercado', nombre:'Mercado', limite:1500000, tipo:'variable', semanal:375000},
-      {id:'gasolina', nombre:'Gasolina', limite:720000, tipo:'variable', semanal:170000},
-      {id:'ocio', nombre:'Ocio sin culpa', limite:300000, tipo:'variable', semanal:75000},
-      {id:'colchon', nombre:'Colchón / emergencias', limite:100000, tipo:'fijo'}
+      {id:'mercado', nombre:'Mercado', limite:1500000, tipo:'variable', semanal:375000, dueno:'compartido'},
+      {id:'gasolina', nombre:'Gasolina', limite:720000, tipo:'variable', semanal:170000, dueno:'hector'},
+      {id:'ocio', nombre:'Ocio sin culpa', limite:300000, tipo:'variable', semanal:75000, dueno:'hector'},
+      {id:'colchon', nombre:'Colchón / emergencias', limite:100000, tipo:'fijo', dueno:'hector'}
     ],
     deudas: [
-      {id:'bbva', nombre:'Préstamo BBVA (carro)', cuota:2873305, saldo:119956722},
-      {id:'bbvavisa', nombre:'Visa Infinite BBVA (mín.)', cuota:1693238, saldo:25444025},
-      {id:'occid', nombre:'Préstamo B. Occidente (moto)', cuota:1891570, saldo:66185003},
-      {id:'visa', nombre:'Visa Occidente (mín. alterno)', cuota:1353000, saldo:27588554},
-      {id:'davi', nombre:'Davibank', cuota:1204578, saldo:1204578},
-      {id:'nu', nombre:'Nu', cuota:317590, saldo:2907007},
-      {id:'siste1', nombre:'Sistecrédito · Garmin (2/6)', cuota:575384, saldo:2567837},
-      {id:'siste2', nombre:'Sistecrédito · Luegopago SOAT (2/4)', cuota:240348, saldo:650164},
-      {id:'siste3', nombre:'Sistecrédito · KOAJ (1/2)', cuota:144214, saldo:250700},
-      {id:'addi', nombre:'Addi', cuota:312165, saldo:874265},
-      {id:'bancol', nombre:'Bancolombia libre inversión (nómina)', cuota:2846006, saldo:0, nomina:true}
+      {id:'bbva', nombre:'Préstamo BBVA (carro)', cuota:2873305, saldo:119956722, dueno:'hector'},
+      {id:'bbvavisa', nombre:'Visa Infinite BBVA (mín.)', cuota:1693238, saldo:25444025, dueno:'hector'},
+      {id:'occid', nombre:'Préstamo B. Occidente (moto)', cuota:1891570, saldo:66185003, dueno:'hector'},
+      {id:'visa', nombre:'Visa Occidente (mín. alterno)', cuota:1353000, saldo:27588554, dueno:'hector'},
+      {id:'davi', nombre:'Davibank', cuota:1204578, saldo:1204578, dueno:'hector'},
+      {id:'nu', nombre:'Nu', cuota:317590, saldo:2907007, dueno:'hector'},
+      {id:'siste1', nombre:'Sistecrédito · Garmin (2/6)', cuota:575384, saldo:2567837, dueno:'hector'},
+      {id:'siste2', nombre:'Sistecrédito · Luegopago SOAT (2/4)', cuota:240348, saldo:650164, dueno:'hector'},
+      {id:'siste3', nombre:'Sistecrédito · KOAJ (1/2)', cuota:144214, saldo:250700, dueno:'hector'},
+      {id:'addi', nombre:'Addi', cuota:312165, saldo:874265, dueno:'hector'},
+      {id:'bancol', nombre:'Bancolombia libre inversión (nómina)', cuota:2846006, saldo:0, nomina:true, dueno:'hector'},
+      // Deudas de Maritza
+      {id:'mar_bdo', nombre:'Banco de Bogotá · libranza (Maritza)', cuota:196198, saldo:3197739, dueno:'maritza'},
+      {id:'mar_icetex', nombre:'ICETEX (Maritza) · pago total este mes', cuota:0, saldo:652000, dueno:'maritza'},
+      {id:'mar_ostu', nombre:'Sistecrédito · Ostu (3/4) (Maritza)', cuota:65785, saldo:65785, dueno:'maritza'},
+      {id:'mar_koaj', nombre:'Sistecrédito · Koaj la central (1/4) (Maritza)', cuota:120427, saldo:361281, dueno:'maritza'},
+      {id:'mar_lafam', nombre:'Sistecrédito · Lafam (4/6) (Maritza)', cuota:421906, saldo:843812, dueno:'maritza'}
     ],
     gastos: [],           // {id, fecha, cat, monto, nota}
     pagosMes: {},         // {'2026-07': {bbva:true,...}}
@@ -65,8 +78,11 @@ export function datosIniciales(){
       {id:'m16', grupo:'humano', cat:'Grasas y otros', nombre:'Aceite (oliva/vegetal)', cantidad:'2 botellas', costo:30000},
       {id:'m17', grupo:'humano', cat:'Grasas y otros', nombre:'Aguacate', cantidad:'mes', costo:20000},
       {id:'m18', grupo:'humano', cat:'Grasas y otros', nombre:'Sal, condimentos, especias', cantidad:'mes', costo:10000},
-      // Perros
-      {id:'m19', grupo:'perros', cat:'Perros', nombre:'Alimento perros', cantidad:'mes', costo:300000}
+      // Mascotas (subgrupo "perros" de la app; incluye gatos, confirmados jul-2026)
+      {id:'m19', grupo:'perros', cat:'Perros', nombre:'Cuido perros (PriceSmart 20480)', cantidad:'bulto ~20 días', costo:285600},
+      {id:'m20', grupo:'perros', cat:'Gatos', nombre:'Comida gato', cantidad:'mes', costo:56095},
+      {id:'m21', grupo:'perros', cat:'Gatos', nombre:'Snack gatos', cantidad:'bulto ~2 meses (prorrateado)', costo:61857},
+      {id:'m22', grupo:'perros', cat:'Veterinario', nombre:'Veterinario / imprevistos', cantidad:'mes', costo:10000}
     ],
     comprasMercado: {}     // {'2026-07': {m1:true,...}}
   };

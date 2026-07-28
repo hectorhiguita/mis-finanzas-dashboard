@@ -9,6 +9,9 @@
 firebase-debug.log
 firestore-debug.log
 ui-debug.log
+CLAUDE.md
+.estractos/
+.facturas/
 
 # Sistema operativo / editor
 .DS_Store

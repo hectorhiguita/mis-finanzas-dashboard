@@ -1,0 +1,14 @@
+{
+  "name": "mis-finanzas-migrations",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Migraciones manuales del documento Firestore usuarios/{uid} del dashboard de presupuesto.",
+  "scripts": {
+    "migrate:dry": "node run.mjs",
+    "migrate": "node run.mjs --apply"
+  },
+  "dependencies": {
+    "firebase": "^10.13.0"
+  }
+}
