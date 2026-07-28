@@ -1,0 +1,47 @@
+name: Migrar presupuesto (Firestore)
+
+# Se dispara SOLO a mano desde la pestaña "Actions" → "Run workflow".
+# Nunca corre en push. Requiere dos secrets del repo (privado):
+#   FB_EMAIL, FB_PASSWORD  (el login de Firebase del dueño del documento)
+on:
+  workflow_dispatch:
+    inputs:
+      modo:
+        description: "dry = solo muestra el diff · apply = escribe en Firestore (hace backup)"
+        type: choice
+        options:
+          - dry
+          - apply
+        default: dry
+
+jobs:
+  migrar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Instalar dependencias
+        working-directory: migrations
+        run: npm install
+
+      - name: Correr migración (${{ inputs.modo }})
+        working-directory: migrations
+        env:
+          FB_EMAIL: ${{ secrets.FB_EMAIL }}
+          FB_PASSWORD: ${{ secrets.FB_PASSWORD }}
+        run: node run.mjs ${{ inputs.modo == 'apply' && '--apply' || '' }}
+
+      - name: Guardar backup como artifact
+        if: ${{ inputs.modo == 'apply' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: backup-firestore
+          path: migrations/backups/
+          if-no-files-found: warn
+          retention-days: 30

@@ -31,6 +31,19 @@ FB_EMAIL=tu@correo FB_PASSWORD='tu-clave' npm run migrate
 > Pasá las credenciales por variables de entorno (o el gestor de secretos del
 > pipeline). No las escribas en ningún archivo versionado.
 
+### Opción B: manual desde GitHub Actions
+
+Workflow `.github/workflows/migrate.yml` (dispara `workflow_dispatch`). En la
+pestaña **Actions** del repo → **Migrar presupuesto (Firestore)** → **Run
+workflow**, elegí `modo`:
+
+- `dry` (por defecto): solo muestra el diff en los logs, no escribe.
+- `apply`: hace backup y escribe. El backup se sube como **artifact**
+  (`backup-firestore`, 30 días).
+
+Requiere dos **secrets** del repo (Settings → Secrets and variables → Actions):
+`FB_EMAIL` y `FB_PASSWORD`. El repo debe ser **privado**.
+
 ## Agregar una migración nueva
 
 Editá `migrations.mjs` y agregá un objeto al final de la lista:

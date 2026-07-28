@@ -10,6 +10,15 @@ firebase-debug.log
 firestore-debug.log
 ui-debug.log
 CLAUDE.md
+
+# Datos financieros personales — NUNCA se versionan (extractos, facturas, PDFs).
+# Los nombres reales de las carpetas no llevan punto, por eso las reglas viejas
+# (.estractos/ / .facturas/) no funcionaban y estos archivos quedaban expuestos.
+estractos/
+pricesmart/
+factura*/
+*.pdf
+*.zip
 .estractos/
 .facturas/
 
