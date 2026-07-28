@@ -1,8 +1,11 @@
 name: Migrar presupuesto (Firestore)
 
 # Se dispara SOLO a mano desde la pestaña "Actions" → "Run workflow".
-# Nunca corre en push. Requiere dos secrets del repo (privado):
-#   FB_EMAIL, FB_PASSWORD  (el login de Firebase del dueño del documento)
+# Nunca corre en push. Requiere secrets del repo (privado):
+#   FB_EMAIL     → tu email de login en la app
+#   FB_PASSWORD  → tu contraseña de la app
+#   FB_EMAILS_EXTRA → (opcional) emails adicionales autorizados, separados por coma
+#                     ej: "maritza@gmail.com"  — se agregan a config/autorizados
 on:
   workflow_dispatch:
     inputs:
@@ -35,6 +38,7 @@ jobs:
         env:
           FB_EMAIL: ${{ secrets.FB_EMAIL }}
           FB_PASSWORD: ${{ secrets.FB_PASSWORD }}
+          FB_EMAILS_EXTRA: ${{ secrets.FB_EMAILS_EXTRA }}
         run: node run.mjs ${{ inputs.modo == 'apply' && '--apply' || '' }}
 
       - name: Guardar backup como artifact

@@ -1,4 +1,4 @@
-import { auth } from "./firebase.js";
+import { auth, db } from "./firebase.js";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -8,6 +8,7 @@ import {
   reauthenticateWithCredential,
   EmailAuthProvider
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import { datosIniciales, cargarDatos, guardarDatos, borrarDatos } from "./store.js";
 
 /* ================= util ================= */
@@ -35,9 +36,21 @@ function traducirErrorAuth(code){
     'auth/too-many-requests':'Demasiados intentos. Espera un momento e intenta de nuevo.',
     'auth/network-request-failed':'Sin conexión. Revisa tu internet.',
     'local/clave-corta':'Usa una contraseña de al menos 6 caracteres.',
-    'local/no-coincide':'Las contraseñas no coinciden.'
+    'local/no-coincide':'Las contraseñas no coinciden.',
+    'local/no-autorizado':'Este correo no está autorizado para usar la app.'
   };
   return map[code] || ('Ocurrió un error (' + (code||'desconocido') + '). Intenta de nuevo.');
+}
+
+async function emailEstaAutorizado(email) {
+  try {
+    const snap = await getDoc(doc(db, 'config', 'autorizados'));
+    if (!snap.exists()) return false;
+    const emails = snap.data().emails || [];
+    return emails.map(e => e.toLowerCase()).includes(email.toLowerCase());
+  } catch {
+    return false;
+  }
 }
 
 $('toggleModo').addEventListener('click', ()=>{
@@ -70,6 +83,8 @@ $('btnEntrar').addEventListener('click', async ()=>{
     if(modoRegistro){
       if(clave.length < 6) throw {code:'local/clave-corta'};
       if(clave !== $('clave2').value) throw {code:'local/no-coincide'};
+      const autorizado = await emailEstaAutorizado(email);
+      if(!autorizado) throw {code:'local/no-autorizado'};
       await createUserWithEmailAndPassword(auth, email, clave);
       // onAuthStateChanged se dispara solo y crea los datos iniciales
     } else {

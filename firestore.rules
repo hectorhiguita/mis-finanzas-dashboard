@@ -1,13 +1,25 @@
 rules_version = '2';
 
-// Regla central: cada persona autenticada solo puede leer y escribir
-// el documento que tiene su propio UID como identificador.
-// Nadie puede ver los datos de nadie más, ni siquiera otro usuario
-// autenticado de esta misma app.
+// Reglas de seguridad:
+// 1. Solo los emails en config/autorizados pueden crear cuenta o acceder.
+// 2. Cada persona autenticada solo puede leer y escribir su propio documento.
+// 3. El documento config/autorizados es de solo lectura para usuarios autenticados
+//    (necesario para que la app pueda validar el email en tiempo real).
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // Lista blanca de emails autorizados — solo lectura para usuarios autenticados.
+    match /config/autorizados {
+      allow read: if request.auth != null;
+      allow write: if false; // Solo se edita manualmente desde la consola de Firebase.
+    }
+
+    // Datos personales de cada usuario.
+    // Condición extra: el email del usuario debe estar en la lista de autorizados.
     match /usuarios/{uid} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow read, write: if request.auth != null
+        && request.auth.uid == uid
+        && request.auth.token.email in get(/databases/$(database)/documents/config/autorizados).data.emails;
     }
   }
 }
