@@ -133,7 +133,7 @@ document.querySelectorAll('nav.tabs button').forEach(b=>{
   b.addEventListener('click', ()=>{
     document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.remove('activo'));
     b.classList.add('activo');
-    ['resumen','semana','mercado','deudas','ajustes'].forEach(t=>$('tab-'+t).classList.add('oculto'));
+    ['resumen','semana','mercado','casa','misdeudas','deudasmaritza','ajustes'].forEach(t=>$('tab-'+t).classList.add('oculto'));
     $('tab-'+b.dataset.tab).classList.remove('oculto');
   });
 });
@@ -197,7 +197,7 @@ function normalizarDatos(d){
 }
 
 /* ================= render ================= */
-function renderTodo(){ renderResumen(); renderSemana(); renderMercado(); renderDeudas(); renderAjustes(); }
+function renderTodo(){ renderResumen(); renderSemana(); renderMercado(); renderCasa(); renderMisDeudas(); renderDeudasMaritza(); renderAjustes(); }
 
 function renderResumen(){
   const [mIni,mFin] = rangoMes();
@@ -391,11 +391,30 @@ $('btnMercadoItem').addEventListener('click', async ()=>{
   renderMercado();
 });
 
-function renderDeudas(){
+// parsea "$1.234" → 1234
+const vNum = s => parseInt(String(s).replace(/\D/g,''),10)||0;
+
+// Feedback visual de un botón "Guardar cambios" tras persistir.
+async function guardarYConfirmar(btn){
+  const txt = btn.textContent;
+  btn.disabled = true;
+  await guardarDatos(UID, DATOS);
+  renderTodo();
+  btn.textContent = 'Guardado ✓';
+  setTimeout(()=>{ btn.textContent = txt; btn.disabled = false; }, 1500);
+}
+
+// Render genérico de una lista de deudas filtrada por dueño.
+// Los pagos (checkbox) se guardan solos; los montos (cuota/saldo) se editan en
+// memoria y se persisten con el botón "Guardar cambios" de la pestaña.
+function renderDeudasDe(dueno, listaId, totalId){
+  const cont = $(listaId); if(!cont) return;
   const mes = mesActual();
   if(!DATOS.pagosMes[mes]) DATOS.pagosMes[mes]={};
   const pagos = DATOS.pagosMes[mes];
-  $('listaDeudas').innerHTML = DATOS.deudas.map(d=>`
+  const deudas = DATOS.deudas.filter(d=>(d.dueno||'hector')===dueno);
+
+  cont.innerHTML = deudas.map(d=>`
     <div class="deuda ${pagos[d.id]?'pagada':''}">
       <div class="top">
         <div><div class="nom">${d.nombre}</div><div class="cuota">Cuota: <input data-cuota="${d.id}" value="${fmt(d.cuota)}" inputmode="numeric" style="width:120px;border:1px solid var(--borde);border-radius:6px;padding:3px 6px;background:#FAFBF8;font-family:'Space Grotesk';font-weight:600">${d.nomina?' · descontada de nómina':''}</div></div>
@@ -406,25 +425,92 @@ function renderDeudas(){
       </div>
       <label class="chkPagado"><input type="checkbox" data-pago="${d.id}" ${pagos[d.id]?'checked':''} ${d.nomina?'checked disabled':''}> ${d.nomina?'Se paga sola cada mes':'Pagada este mes'}</label>
     </div>
-  `).join('');
-  const total = DATOS.deudas.reduce((s,d)=>s+(parseInt(d.saldo,10)||0),0);
-  $('totalDeuda').textContent = fmt(total);
+  `).join('') || '<p class="desc">Sin deudas registradas.</p>';
 
-  $('listaDeudas').querySelectorAll('[data-pago]').forEach(i=>i.addEventListener('change', async ()=>{
+  $(totalId).textContent = fmt(deudas.reduce((s,d)=>s+(parseInt(d.saldo,10)||0),0));
+
+  // pago → se guarda solo (acción discreta). No re-render de esta lista para no
+  // pisar montos en edición; solo refresca el resumen.
+  cont.querySelectorAll('[data-pago]').forEach(i=>i.addEventListener('change', async ()=>{
     DATOS.pagosMes[mes][i.dataset.pago] = i.checked;
-    await guardarDatos(UID, DATOS); renderDeudas();
+    await guardarDatos(UID, DATOS);
+    renderDeudasDe(dueno, listaId, totalId); // refresca el tachado sin perder montos en edición
+    renderResumen();
   }));
-  $('listaDeudas').querySelectorAll('[data-saldo]').forEach(i=>i.addEventListener('change', async ()=>{
-    const d = DATOS.deudas.find(x=>x.id===i.dataset.saldo);
-    d.saldo = parseInt(i.value.replace(/\D/g,''),10)||0;
-    await guardarDatos(UID, DATOS); renderDeudas();
+  // cuota / saldo → solo en memoria; se persisten con el botón Guardar.
+  cont.querySelectorAll('[data-cuota]').forEach(i=>i.addEventListener('input', ()=>{
+    const d = DATOS.deudas.find(x=>x.id===i.dataset.cuota); if(d) d.cuota = vNum(i.value);
   }));
-  $('listaDeudas').querySelectorAll('[data-cuota]').forEach(i=>i.addEventListener('change', async ()=>{
-    const d = DATOS.deudas.find(x=>x.id===i.dataset.cuota);
-    d.cuota = parseInt(i.value.replace(/\D/g,''),10)||0;
-    await guardarDatos(UID, DATOS); renderDeudas(); renderResumen();
+  cont.querySelectorAll('[data-saldo]').forEach(i=>i.addEventListener('input', ()=>{
+    const d = DATOS.deudas.find(x=>x.id===i.dataset.saldo); if(d) d.saldo = vNum(i.value);
   }));
 }
+function renderMisDeudas(){ renderDeudasDe('hector', 'listaMisDeudas', 'totalMisDeudas'); }
+function renderDeudasMaritza(){ renderDeudasDe('maritza', 'listaDeudasMaritza', 'totalDeudasMaritza'); }
+
+$('btnGuardarMisDeudas').addEventListener('click', ()=>guardarYConfirmar($('btnGuardarMisDeudas')));
+$('btnGuardarDeudasMaritza').addEventListener('click', ()=>guardarYConfirmar($('btnGuardarDeudasMaritza')));
+
+/* ---- Casa: presupuesto compartido con columnas por persona ---- */
+function renderCasa(){
+  const cont = $('listaCasa'); if(!cont) return;
+  const personas = DATOS.personas || [];
+  const compartidas = DATOS.categorias.filter(c=>c.dueno==='compartido');
+
+  if(!compartidas.length){
+    cont.innerHTML = '<p class="desc">No hay gastos marcados como compartidos todavía. Marca alguno abajo.</p>';
+  } else {
+    const th = personas.map(p=>`<th style="text-align:right;padding:8px 6px">${p.nombre}<br><span style="font-weight:400;color:var(--tinta2);font-size:.8rem">${Math.round(proporcion(p.id)*100)}%</span></th>`).join('');
+    const filas = compartidas.map(c=>{
+      const cols = personas.map(p=>`<td style="text-align:right;padding:8px 6px;font-family:'Space Grotesk'">${fmt(parteDe('compartido', c.limite, p.id))}</td>`).join('');
+      return `<tr style="border-top:1px solid var(--borde)">
+        <td style="padding:8px 6px">${c.nombre}</td>
+        <td style="text-align:right;padding:8px 6px"><input data-casa="${c.id}" value="${c.limite}" inputmode="numeric" style="width:120px;text-align:right;border:1px solid var(--borde);border-radius:8px;padding:5px 8px;background:#FAFBF8;font-family:'Space Grotesk';font-weight:600"></td>
+        ${cols}
+      </tr>`;
+    }).join('');
+    const totalPresup = compartidas.reduce((s,c)=>s+c.limite,0);
+    const totCols = personas.map(p=>`<td style="text-align:right;padding:8px 6px;font-family:'Space Grotesk';font-weight:700">${fmt(compartidas.reduce((s,c)=>s+parteDe('compartido', c.limite, p.id), 0))}</td>`).join('');
+    cont.innerHTML = `
+      <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:.92rem">
+        <thead><tr style="color:var(--tinta2);text-align:left">
+          <th style="padding:8px 6px">Concepto</th>
+          <th style="text-align:right;padding:8px 6px">Presupuesto</th>
+          ${th}
+        </tr></thead>
+        <tbody>${filas}</tbody>
+        <tfoot><tr style="border-top:2px solid var(--borde)">
+          <td style="padding:8px 6px;font-weight:700">Total compartido</td>
+          <td style="text-align:right;padding:8px 6px;font-family:'Space Grotesk';font-weight:700">${fmt(totalPresup)}</td>
+          ${totCols}
+        </tr></tfoot>
+      </table>
+      </div>`;
+    cont.querySelectorAll('[data-casa]').forEach(i=>i.addEventListener('input', ()=>{
+      const c = DATOS.categorias.find(x=>x.id===i.dataset.casa); if(c) c.limite = vNum(i.value);
+    }));
+  }
+  renderCompartido();
+}
+
+// Toggle de "compartido" para categorías propias de Héctor (no toca las de Maritza).
+function renderCompartido(){
+  const cont = $('listaCompartido'); if(!cont) return;
+  const cats = DATOS.categorias.filter(c=>c.dueno==='hector' || c.dueno==='compartido');
+  cont.innerHTML = cats.map(c=>`
+    <label class="chkPagado" style="margin-top:6px">
+      <input type="checkbox" data-comp="${c.id}" ${c.dueno==='compartido'?'checked':''}>
+      ${c.nombre} <span style="color:var(--tinta2)">· ${c.dueno==='compartido'?'compartido':'solo Héctor'}</span>
+    </label>
+  `).join('');
+  cont.querySelectorAll('[data-comp]').forEach(i=>i.addEventListener('change', async ()=>{
+    const c = DATOS.categorias.find(x=>x.id===i.dataset.comp);
+    if(c) c.dueno = i.checked ? 'compartido' : 'hector';
+    await guardarDatos(UID, DATOS); renderTodo();
+  }));
+}
+$('btnGuardarCasa').addEventListener('click', ()=>guardarYConfirmar($('btnGuardarCasa')));
 
 function renderAjustes(){
   let html = (DATOS.personas||[]).map(p=>

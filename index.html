@@ -54,7 +54,9 @@
     <button data-tab="resumen" class="activo">Resumen</button>
     <button data-tab="semana">Semana</button>
     <button data-tab="mercado">Mercado</button>
-    <button data-tab="deudas">Deudas</button>
+    <button data-tab="casa">Casa</button>
+    <button data-tab="misdeudas">Mis deudas</button>
+    <button data-tab="deudasmaritza">Maritza</button>
     <button data-tab="ajustes">Ajustes</button>
   </nav>
 
@@ -157,13 +159,40 @@
     </div>
   </section>
 
-  <!-- DEUDAS -->
-  <section id="tab-deudas" class="oculto">
+  <!-- CASA (presupuesto compartido) -->
+  <section id="tab-casa" class="oculto">
     <div class="carta">
-      <h2>Tus deudas este mes</h2>
-      <p class="desc">Marca cada pago cuando salga. El saldo lo actualizas tú una vez al mes con el extracto en la mano; verlo bajar es el motor.</p>
-      <div id="listaDeudas"></div>
-      <div class="totalDeuda"><span>Deuda total registrada</span><span class="num" id="totalDeuda">$0</span></div>
+      <h2>Presupuesto de la casa</h2>
+      <p class="desc">Gastos compartidos, divididos proporcional al ingreso neto de cada uno. Edita el presupuesto y dale <strong>Guardar cambios</strong>.</p>
+      <div id="listaCasa"></div>
+      <button class="btnSecundario" id="btnGuardarCasa" style="margin-top:14px">Guardar cambios</button>
+    </div>
+    <div class="carta">
+      <h2>¿Qué es compartido?</h2>
+      <p class="desc">Marca lo que se paga entre los dos. Lo demás corre por cuenta de su dueño. Se guarda al instante.</p>
+      <div id="listaCompartido"></div>
+    </div>
+  </section>
+
+  <!-- MIS DEUDAS (Héctor) -->
+  <section id="tab-misdeudas" class="oculto">
+    <div class="carta">
+      <h2>Mis deudas (Héctor)</h2>
+      <p class="desc">Marca cada pago cuando salga (se guarda solo). Los cambios de cuota o saldo se guardan con el botón.</p>
+      <div id="listaMisDeudas"></div>
+      <div class="totalDeuda"><span>Deuda total · Héctor</span><span class="num" id="totalMisDeudas">$0</span></div>
+      <button class="btnSecundario" id="btnGuardarMisDeudas" style="margin-top:14px">Guardar cambios</button>
+    </div>
+  </section>
+
+  <!-- DEUDAS DE MARITZA -->
+  <section id="tab-deudasmaritza" class="oculto">
+    <div class="carta">
+      <h2>Deudas de Maritza</h2>
+      <p class="desc">Marca cada pago cuando salga (se guarda solo). Los cambios de cuota o saldo se guardan con el botón.</p>
+      <div id="listaDeudasMaritza"></div>
+      <div class="totalDeuda"><span>Deuda total · Maritza</span><span class="num" id="totalDeudasMaritza">$0</span></div>
+      <button class="btnSecundario" id="btnGuardarDeudasMaritza" style="margin-top:14px">Guardar cambios</button>
     </div>
   </section>
 
