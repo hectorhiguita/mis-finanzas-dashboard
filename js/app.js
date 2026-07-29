@@ -17,6 +17,7 @@ const fmt = n => '$' + Math.round(n).toLocaleString('es-CO');
 
 let DATOS = null;
 let UID = null;
+let MES_VISTA = mesActual(); // mes que se está viendo (por defecto, el actual)
 
 function mesActual(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
 function inicioSemana(d=new Date()){ const x=new Date(d); const dia=(x.getDay()+6)%7; x.setDate(x.getDate()-dia); x.setHours(0,0,0,0); return x; }
@@ -146,9 +147,33 @@ function gastosDe(catId, desde, hasta){
   }).reduce((s,g)=>s+g.monto,0);
 }
 function rangoMes(){
-  const d=new Date();
-  return [new Date(d.getFullYear(), d.getMonth(), 1), new Date(d.getFullYear(), d.getMonth()+1, 1)];
+  const [y,m] = MES_VISTA.split('-').map(Number);
+  return [new Date(y, m-1, 1), new Date(y, m, 1)];
 }
+// Nombre legible de un mes "2026-07" → "Julio 2026".
+function nombreMes(mes){
+  const [y,m] = mes.split('-').map(Number);
+  const s = new Date(y, m-1, 1).toLocaleDateString('es-CO',{month:'long', year:'numeric'}).replace(' de ', ' ');
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+// Meses que tienen datos (pagos, compras, reales, gastos) + el mes actual.
+function mesesConDatos(){
+  const set = new Set([mesActual()]);
+  ['pagosMes','pagosCasa','comprasMercado','realesMercado'].forEach(k=>
+    Object.keys(DATOS[k]||{}).forEach(m=>set.add(m)));
+  (DATOS.gastos||[]).forEach(g=>{ if(g.fecha) set.add(String(g.fecha).slice(0,7)); });
+  return [...set].sort().reverse(); // más reciente primero
+}
+// Pinta el selector de mes y marca si es un mes histórico (no el actual).
+function renderMesSelector(){
+  const sel = $('selMes'); if(!sel) return;
+  const meses = mesesConDatos();
+  if(!meses.includes(MES_VISTA)) MES_VISTA = meses[0] || mesActual();
+  sel.innerHTML = meses.map(m=>`<option value="${m}" ${m===MES_VISTA?'selected':''}>${nombreMes(m)}</option>`).join('');
+  const hist = $('mesHistorico');
+  if(hist) hist.classList.toggle('oculto', MES_VISTA===mesActual());
+}
+$('selMes').addEventListener('change', ()=>{ MES_VISTA = $('selMes').value; renderTodo(); });
 function rangoSemana(){
   const i=inicioSemana(); const f=new Date(i); f.setDate(f.getDate()+7);
   return [i,f];
@@ -194,6 +219,7 @@ function normalizarDatos(d){
   (d.categorias||[]).forEach(c=>{ if(!c.dueno) c.dueno = (c.id==='arriendo'||c.id==='mercado')?'compartido':'hector'; });
   (d.deudas||[]).forEach(x=>{ if(!x.dueno) x.dueno='hector'; });
   if(!d.pagosCasa) d.pagosCasa = {};
+  if(!d.realesMercado) d.realesMercado = {};
   return d;
 }
 
@@ -230,6 +256,7 @@ function presupuestoRestante(personaId, mes){
 function renderTodo(){ renderResumen(); renderSemana(); renderMercado(); renderCasa(); renderMisDeudas(); renderDeudasMaritza(); renderAjustes(); }
 
 function renderResumen(){
+  renderMesSelector();
   const [mIni,mFin] = rangoMes();
   const cuotasNoNomina = DATOS.deudas.filter(d=>!d.nomina).reduce((s,d)=>s+d.cuota,0);
   const fijos = DATOS.categorias.filter(c=>c.tipo==='fijo').reduce((s,c)=>s+c.limite,0);
@@ -289,7 +316,7 @@ function renderPersonas(mIni, mFin){
   const personas = DATOS.personas || [];
   if(personas.length < 2){ cont.innerHTML = ''; cont.closest('.carta')?.classList.add('oculto'); return; }
   cont.closest('.carta')?.classList.remove('oculto');
-  const mes = mesActual();
+  const mes = MES_VISTA;
   cont.innerHTML = personas.map(p=>{
     const disp = disponiblePersona(p.id, mIni, mFin);
     const prop = Math.round(proporcion(p.id) * 100);
@@ -366,9 +393,12 @@ $('btnGasto').addEventListener('click', async ()=>{
 });
 
 function renderMercado(){
-  const mes = mesActual();
+  const mes = MES_VISTA;
   if(!DATOS.comprasMercado[mes]) DATOS.comprasMercado[mes]={};
+  if(!DATOS.realesMercado) DATOS.realesMercado={};
+  if(!DATOS.realesMercado[mes]) DATOS.realesMercado[mes]={};
   const comprado = DATOS.comprasMercado[mes];
+  const reales = DATOS.realesMercado[mes];
 
   function pintarLista(contenedorId, grupo){
     const items = DATOS.mercadoItems.filter(i=>i.grupo===grupo);
@@ -376,11 +406,13 @@ function renderMercado(){
     items.forEach(it=>{
       if(it.cat!==catActual){ html+=`<div class="cabeceraCat">${it.cat}</div>`; catActual=it.cat; }
       const chk = !!comprado[it.id];
+      const realVal = reales[it.id];
       html += `<div class="itemMercado ${chk?'comprado':''}">
         <label class="chk"><input type="checkbox" data-comprado="${it.id}" ${chk?'checked':''}>
           <span><span class="nombreIt">${it.nombre}</span><br><span class="cantIt">${it.cantidad}</span></span>
         </label>
-        <span class="costoIt">${fmt(it.costo)}</span>
+        <span class="costoIt" title="Presupuesto">${fmt(it.costo)}</span>
+        <input class="realIt" data-real="${it.id}" value="${realVal!=null?fmt(realVal):''}" placeholder="real" inputmode="numeric" aria-label="Valor real de ${it.nombre}">
         <button class="borrar" data-borrarItem="${it.id}" aria-label="Quitar de la lista">✕</button>
       </div>`;
     });
@@ -393,24 +425,20 @@ function renderMercado(){
       DATOS.mercadoItems = DATOS.mercadoItems.filter(x=>x.id!==b.dataset.borrarItem);
       await guardarDatos(UID, DATOS); renderMercado();
     }));
+    // valor real: recalcula en vivo mientras cargas; guarda al salir del campo
+    $(contenedorId).querySelectorAll('[data-real]').forEach(i=>{
+      i.addEventListener('input', ()=>{
+        const v = vNum(i.value);
+        if(v>0) reales[i.dataset.real] = v; else delete reales[i.dataset.real];
+        refrescarTotalesMercado();
+      });
+      i.addEventListener('change', async ()=>{ await guardarDatos(UID, DATOS); });
+    });
   }
   pintarLista('listaMercadoHumano','humano');
   pintarLista('listaMercadoPerros','perros');
 
-  const totalHumano = DATOS.mercadoItems.filter(i=>i.grupo==='humano').reduce((s,i)=>s+i.costo,0);
-  const totalPerros = DATOS.mercadoItems.filter(i=>i.grupo==='perros').reduce((s,i)=>s+i.costo,0);
-  const totalMercado = totalHumano + totalPerros;
-  const limiteCat = DATOS.categorias.find(c=>c.id==='mercado');
-  const limite = limiteCat ? limiteCat.limite : totalMercado;
-
-  $('mercadoTotal').textContent = fmt(totalMercado);
-  $('mercadoTotal').style.color = totalMercado > limite ? 'var(--rojo)' : 'var(--lima)';
-  $('mercadoDetalle').textContent = totalMercado > limite
-    ? `Te pasas por ${fmt(totalMercado-limite)} del presupuesto de mercado. Ajusta un ítem o avísame para subir el límite.`
-    : `Con margen de ${fmt(limite-totalMercado)} dentro de tu sobre de mercado.`;
-  $('mLimite').textContent = fmt(limite);
-  $('mHumano').textContent = fmt(totalHumano);
-  $('mPerros').textContent = fmt(totalPerros);
+  refrescarTotalesMercado();
 
   // sugerencias de categorías ya existentes para el formulario
   const dl = $('catsMercado');
@@ -418,6 +446,26 @@ function renderMercado(){
     const cats = [...new Set(DATOS.mercadoItems.map(i=>i.cat).filter(Boolean))].sort();
     dl.innerHTML = cats.map(c=>`<option value="${c}"></option>`).join('');
   }
+}
+// Recalcula presupuesto vs real del mercado (sin re-render de las listas).
+function refrescarTotalesMercado(){
+  const mes = MES_VISTA;
+  const reales = (DATOS.realesMercado||{})[mes] || {};
+  const totalHumano = DATOS.mercadoItems.filter(i=>i.grupo==='humano').reduce((s,i)=>s+i.costo,0);
+  const totalPerros = DATOS.mercadoItems.filter(i=>i.grupo==='perros').reduce((s,i)=>s+i.costo,0);
+  const totalMercado = totalHumano + totalPerros;
+  const totalReal = DATOS.mercadoItems.reduce((s,i)=>s+(reales[i.id]||0),0);
+  const dif = totalMercado - totalReal; // >0 = vas por debajo del presupuesto
+  if($('mercadoTotal')){
+    $('mercadoTotal').textContent = fmt(totalReal);
+    $('mercadoTotal').style.color = totalReal>totalMercado ? 'var(--rojo)' : 'var(--lima)';
+  }
+  if($('mercadoDetalle')) $('mercadoDetalle').textContent =
+    `De un presupuesto de ${fmt(totalMercado)}, llevas ${fmt(totalReal)} real. ` +
+    (dif>=0 ? `Margen: ${fmt(dif)}.` : `Te pasaste: ${fmt(-dif)}.`);
+  if($('mPresup')) $('mPresup').textContent = fmt(totalMercado);
+  if($('mReal')) $('mReal').textContent = fmt(totalReal);
+  if($('mDif')){ $('mDif').textContent = fmt(dif); $('mDif').style.color = dif<0 ? 'var(--rojo)' : 'var(--verde)'; }
 }
 $('btnMercadoItem').addEventListener('click', async ()=>{
   const costo = parseInt($('mCosto').value,10);
@@ -453,7 +501,7 @@ async function guardarYConfirmar(btn){
 // memoria y se persisten con el botón "Guardar cambios" de la pestaña.
 function renderDeudasDe(dueno, listaId, totalId){
   const cont = $(listaId); if(!cont) return;
-  const mes = mesActual();
+  const mes = MES_VISTA;
   if(!DATOS.pagosMes[mes]) DATOS.pagosMes[mes]={};
   const pagos = DATOS.pagosMes[mes];
   const deudas = DATOS.deudas.filter(d=>(d.dueno||'hector')===dueno);
@@ -514,7 +562,7 @@ function renderDeudasMaritza(){ renderDeudasDe('maritza', 'listaDeudasMaritza', 
 // Gastos fijos propios de una persona, con check de "pagado" que descuenta del restante.
 function renderFijosDe(dueno, listaId){
   const cont = $(listaId); if(!cont) return;
-  const mes = mesActual();
+  const mes = MES_VISTA;
   if(!DATOS.pagosMes[mes]) DATOS.pagosMes[mes]={};
   const pagos = DATOS.pagosMes[mes];
   const fijos = DATOS.categorias.filter(c=>c.tipo==='fijo' && (c.dueno||'hector')===dueno);
@@ -552,7 +600,7 @@ $('btnAddDeudaMaritza').addEventListener('click', ()=>addDeuda('maritza','ndNomb
 /* ---- Casa: presupuesto compartido, aporte individual + pagado por persona ---- */
 function renderCasa(){
   const cont = $('listaCasa'); if(!cont) return;
-  const mes = mesActual();
+  const mes = MES_VISTA;
   if(!DATOS.pagosCasa) DATOS.pagosCasa = {};
   if(!DATOS.pagosCasa[mes]) DATOS.pagosCasa[mes] = {};
   const pc = DATOS.pagosCasa[mes];

@@ -94,7 +94,8 @@ export function datosIniciales(){
       {id:'m28', grupo:'humano', cat:'Higiene personal', nombre:'Gel de baño', cantidad:'mes', costo:39412},
       {id:'m29', grupo:'humano', cat:'Higiene personal', nombre:'Crema corporal (Eucerin)', cantidad:'$128.487 ~cada 2.5 meses (prorrateado)', costo:51395}
     ],
-    comprasMercado: {}     // {'2026-07': {m1:true,...}}
+    comprasMercado: {},    // {'2026-07': {m1:true,...}}  ítems marcados como comprados
+    realesMercado: {}      // {'2026-07': {m1:132000,...}}  valor real pagado por ítem ese mes
   };
 }
 

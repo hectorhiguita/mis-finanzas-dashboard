@@ -120,9 +120,17 @@ nav.tabs button.activo{background:var(--carta);color:var(--verde);box-shadow:0 2
 .itemMercado input[type=checkbox]{width:18px;height:18px;accent-color:var(--verde);flex-shrink:0}
 .itemMercado .nombreIt{font-weight:600;font-size:14px}
 .itemMercado .cantIt{font-size:12px;color:var(--tinta2)}
-.itemMercado .costoIt{font-family:'Space Grotesk';font-weight:600;white-space:nowrap;font-size:14px}
+.itemMercado .costoIt{font-family:'Space Grotesk';font-weight:600;white-space:nowrap;font-size:13px;color:var(--tinta2)}
+.itemMercado .realIt{width:92px;flex-shrink:0;text-align:right;border:1px solid var(--borde);border-radius:8px;padding:6px 8px;background:#FAFBF8;font-family:'Space Grotesk';font-weight:600;font-size:13px}
+.itemMercado .realIt:focus{border-color:var(--verde);outline:none}
 .cabeceraCat{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--tinta2);font-weight:600;margin:14px 0 6px}
 .cabeceraCat:first-child{margin-top:0}
+
+/* selector de mes (histórico) */
+.selMesWrap{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.selMesWrap label{font-size:13px;color:var(--tinta2);font-weight:600}
+.selMesWrap select{flex:0 1 auto;padding:9px 12px;border:1.5px solid var(--borde);border-radius:10px;background:var(--carta);font-weight:600;font-family:'Space Grotesk'}
+.badgeHist{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#8a6d00;background:#FDF3D0;border:1px solid #F0E0A0;border-radius:999px;padding:3px 9px;font-weight:700}
 
 /* calculadora en vivo: restante y aportes de casa */
 .cajaRestante{border:1px solid var(--borde);border-radius:12px;padding:14px;margin-bottom:12px;background:#F6F8F3}

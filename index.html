@@ -62,6 +62,11 @@
 
   <!-- RESUMEN -->
   <section id="tab-resumen">
+    <div class="selMesWrap">
+      <label for="selMes">Mes</label>
+      <select id="selMes"></select>
+      <span id="mesHistorico" class="badgeHist oculto">histórico</span>
+    </div>
     <div class="carta hero">
       <div class="etiqueta">Disponible del hogar este mes (después de fijos y deudas)</div>
       <div class="num" id="disponibleMes">$0</div>
@@ -121,13 +126,13 @@
   <!-- MERCADO -->
   <section id="tab-mercado" class="oculto">
     <div class="carta hero">
-      <div class="etiqueta">Mercado del mes · comida + perros</div>
+      <div class="etiqueta">Mercado del mes · lo real que llevas</div>
       <div class="num" id="mercadoTotal">$0</div>
       <div class="detalleHero" id="mercadoDetalle"></div>
       <div class="filaHero">
-        <div><div class="mini">Presupuesto total</div><div class="val" id="mLimite"></div></div>
-        <div><div class="mini">Humano / hogar</div><div class="val" id="mHumano"></div></div>
-        <div><div class="mini">Perros</div><div class="val" id="mPerros"></div></div>
+        <div><div class="mini">Presupuesto</div><div class="val" id="mPresup"></div></div>
+        <div><div class="mini">Real gastado</div><div class="val" id="mReal"></div></div>
+        <div><div class="mini">Diferencia</div><div class="val" id="mDif"></div></div>
       </div>
     </div>
 
