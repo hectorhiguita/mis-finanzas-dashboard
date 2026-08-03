@@ -17,7 +17,7 @@ const fmt = n => '$' + Math.round(n).toLocaleString('es-CO');
 
 let DATOS = null;
 let UID = null;
-let MES_VISTA = cicloActual(); // ciclo de pago que se está viendo (por defecto, el actual)
+let MES_VISTA; // ciclo de pago en vista; se inicializa abajo, tras definir DIA_CORTE
 
 function mesActual(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
 
@@ -48,6 +48,7 @@ function rangoCicloTexto(clave){
   const f = d => d.toLocaleDateString('es-CO',{day:'numeric',month:'short'});
   return `${f(ini)} – ${f(new Date(fin.getTime()-86400000))}`;
 }
+MES_VISTA = cicloActual(); // por defecto, el ciclo de pago actual
 
 function inicioSemana(d=new Date()){ const x=new Date(d); const dia=(x.getDay()+6)%7; x.setDate(x.getDate()-dia); x.setHours(0,0,0,0); return x; }
 function claveSemana(){ const i=inicioSemana(); return i.toISOString().slice(0,10); }
