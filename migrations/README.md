@@ -26,10 +26,21 @@ FB_EMAIL=tu@correo FB_PASSWORD='tu-clave' npm run migrate:dry
 
 # 2) Aplicar de verdad (hace backup y escribe):
 FB_EMAIL=tu@correo FB_PASSWORD='tu-clave' npm run migrate
+
+# 3) Exportar tus datos reales a un JSON local (SOLO LEE, no escribe):
+FB_EMAIL=tu@correo FB_PASSWORD='tu-clave' npm run export
 ```
 
 > Pasá las credenciales por variables de entorno (o el gestor de secretos del
 > pipeline). No las escribas en ningún archivo versionado.
+
+### Exportar tus gastos para análisis (`npm run export`)
+
+`export.mjs` vuelca tu documento `usuarios/{uid}` a `snapshots/latest.json`
+(gitignored, son datos financieros personales). Es de **solo lectura**: nunca
+escribe en Firestore. Úsalo cuando quieras que Claude revise tus gastos reales
+y te sugiera ahorros — corré el comando y luego pedile que lea
+`migrations/snapshots/latest.json`.
 
 ### Opción B: manual desde GitHub Actions
 

@@ -17,9 +17,38 @@ const fmt = n => '$' + Math.round(n).toLocaleString('es-CO');
 
 let DATOS = null;
 let UID = null;
-let MES_VISTA = mesActual(); // mes que se está viendo (por defecto, el actual)
+let MES_VISTA = cicloActual(); // ciclo de pago que se está viendo (por defecto, el actual)
 
 function mesActual(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+
+/* ---- ciclo de cuentas por pagar anclado a la nómina ----
+   El salario de Alejo entra el 28 y el de Maritza el 30. El "mes financiero"
+   NO es el calendario: corre del 28 de un mes al 27 del siguiente (se ancla a
+   la primera entrada de plata, el 28). El ciclo que arranca el día de corte se
+   rotula con el mes SIGUIENTE — el mes cuyas cuentas ese salario va a pagar. */
+const DIA_CORTE = 28; // primer día en que entra plata (nómina de Alejo)
+const PAGOS_NOMINA = [ {quien:'Alejo', dia:28}, {quien:'Maritza', dia:30} ];
+// Etiqueta "YYYY-MM" del ciclo al que pertenece una fecha.
+function cicloDe(fecha, dia=DIA_CORTE){
+  const d = new Date(fecha);
+  let y = d.getFullYear(), m = d.getMonth();
+  if(d.getDate() >= dia){ m++; if(m>11){ m=0; y++; } }
+  return y+'-'+String(m+1).padStart(2,'0');
+}
+function cicloActual(){ return cicloDe(new Date()); }
+// Rango real [inicio, fin) de un ciclo rotulado "YYYY-MM": del día de corte del
+// mes anterior al día de corte de ese mes.
+function rangoCiclo(clave, dia=DIA_CORTE){
+  const [y,m] = clave.split('-').map(Number); // m = mes rótulo (1-based)
+  return [ new Date(y, m-2, dia), new Date(y, m-1, dia) ];
+}
+// Texto "28 jul – 27 ago" del rango de un ciclo.
+function rangoCicloTexto(clave){
+  const [ini,fin] = rangoCiclo(clave);
+  const f = d => d.toLocaleDateString('es-CO',{day:'numeric',month:'short'});
+  return `${f(ini)} – ${f(new Date(fin.getTime()-86400000))}`;
+}
+
 function inicioSemana(d=new Date()){ const x=new Date(d); const dia=(x.getDay()+6)%7; x.setDate(x.getDate()-dia); x.setHours(0,0,0,0); return x; }
 function claveSemana(){ const i=inicioSemana(); return i.toISOString().slice(0,10); }
 
@@ -147,8 +176,7 @@ function gastosDe(catId, desde, hasta){
   }).reduce((s,g)=>s+g.monto,0);
 }
 function rangoMes(){
-  const [y,m] = MES_VISTA.split('-').map(Number);
-  return [new Date(y, m-1, 1), new Date(y, m, 1)];
+  return rangoCiclo(MES_VISTA);
 }
 // Nombre legible de un mes "2026-07" → "Julio 2026".
 function nombreMes(mes){
@@ -158,20 +186,22 @@ function nombreMes(mes){
 }
 // Meses que tienen datos (pagos, compras, reales, gastos) + el mes actual.
 function mesesConDatos(){
-  const set = new Set([mesActual()]);
+  const set = new Set([cicloActual()]);
   ['pagosMes','pagosCasa','comprasMercado','realesMercado'].forEach(k=>
     Object.keys(DATOS[k]||{}).forEach(m=>set.add(m)));
-  (DATOS.gastos||[]).forEach(g=>{ if(g.fecha) set.add(String(g.fecha).slice(0,7)); });
+  (DATOS.gastos||[]).forEach(g=>{ if(g.fecha) set.add(cicloDe(g.fecha)); });
   return [...set].sort().reverse(); // más reciente primero
 }
 // Pinta el selector de mes y marca si es un mes histórico (no el actual).
 function renderMesSelector(){
   const sel = $('selMes'); if(!sel) return;
   const meses = mesesConDatos();
-  if(!meses.includes(MES_VISTA)) MES_VISTA = meses[0] || mesActual();
+  if(!meses.includes(MES_VISTA)) MES_VISTA = meses[0] || cicloActual();
   sel.innerHTML = meses.map(m=>`<option value="${m}" ${m===MES_VISTA?'selected':''}>${nombreMes(m)}</option>`).join('');
   const hist = $('mesHistorico');
-  if(hist) hist.classList.toggle('oculto', MES_VISTA===mesActual());
+  if(hist) hist.classList.toggle('oculto', MES_VISTA===cicloActual());
+  const rng = $('cicloRango');
+  if(rng) rng.textContent = `Ciclo de pago ${rangoCicloTexto(MES_VISTA)} · la nómina entra ${PAGOS_NOMINA.map(p=>p.quien+' el '+p.dia).join(' y ')}`;
 }
 $('selMes').addEventListener('change', ()=>{ MES_VISTA = $('selMes').value; renderTodo(); });
 function rangoSemana(){

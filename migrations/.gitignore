@@ -1,3 +1,5 @@
 node_modules/
 # Backups del documento Firestore: contienen datos financieros personales, no se versionan.
 backups/
+# Snapshots exportados (export.mjs): también son datos financieros personales.
+snapshots/

@@ -6,7 +6,8 @@
   "description": "Migraciones manuales del documento Firestore usuarios/{uid} del dashboard de presupuesto.",
   "scripts": {
     "migrate:dry": "node run.mjs",
-    "migrate": "node run.mjs --apply"
+    "migrate": "node run.mjs --apply",
+    "export": "node export.mjs"
   },
   "dependencies": {
     "firebase": "^10.13.0"
